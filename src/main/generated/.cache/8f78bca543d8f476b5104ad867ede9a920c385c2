@@ -1,3 +1,4 @@
 // 1.21.4	-999999999-01-01T00:00:00	PF/Tags for minecraft:block
 d58a1789bcf0c0fde9840abc01b74ab22b63aa4e data/pathfinder/tags/block/carpets.json
-bdda230cc80172b41bb23b89cad19400c59aa0d5 data/pathfinder/tags/block/passable.json
+8b5f80d0a07ded5ea2952d55091f4a17eece4f17 data/pathfinder/tags/block/dangerous.json
+3a951af5e5665197c1d48ccd3b6a514686dcbc12 data/pathfinder/tags/block/passable.json
