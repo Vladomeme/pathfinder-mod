@@ -285,8 +285,14 @@ public class GraphEditor {
             return 1;
         }
         if (hasChanges) {
-            Output.chat("There are unfinished graph changes. Append selection or use `discard` command to drop them.", Output.Color.RED);
-            return 1;
+            if (PFConfig.INSTANCE.appendOnSave) {
+                Output.chat("Auto-appended unfinished changes.");
+                appendSelection();
+            }
+            else {
+                Output.chat("There are unfinished graph changes. Append selection or use `discard` command to drop them.", Output.Color.RED);
+                return 1;
+            }
         }
 
         cleanupGraph();

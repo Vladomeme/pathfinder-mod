@@ -28,8 +28,7 @@ public class PFConfig {
     public int maxPathDistance = 50;
     public int gapSearchStartingRange = 20;
     public transient int maxPathDistanceSquared = 2500;
-    //todo auto append
-    public boolean autoAppend = false;
+    public boolean appendOnSave = false;
 
     public int buttonInactiveColor = -2236963;
     public int buttonNegativeColor = -1823700;
