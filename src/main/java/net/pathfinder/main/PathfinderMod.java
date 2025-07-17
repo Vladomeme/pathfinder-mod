@@ -15,7 +15,6 @@ import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.option.KeyBinding;
 import net.minecraft.client.util.InputUtil;
-import net.minecraft.entity.ai.pathing.Path;
 import net.minecraft.util.Identifier;
 import net.pathfinder.main.datagen.BlockTagProvider;
 import net.pathfinder.main.graph.RuleHolder;
@@ -27,7 +26,6 @@ import net.pathfinder.main.graph.waypoint.GraphEditor;
 import net.pathfinder.main.graph.waypoint.WaypointGraphRenderer;
 import net.pathfinder.main.graph.waypoint.WaypointIO;
 import net.pathfinder.main.graph.waypoint.data.DimensionData;
-import net.pathfinder.main.graph.waypoint.path.PathBuilder;
 import net.pathfinder.main.graph.waypoint.path.PathManager;
 import org.lwjgl.glfw.GLFW;
 

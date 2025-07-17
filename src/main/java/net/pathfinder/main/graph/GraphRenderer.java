@@ -1,6 +1,5 @@
 package net.pathfinder.main.graph;
 
-import com.mojang.blaze3d.systems.RenderSystem;
 import me.x150.renderer.render.Renderer3d;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.util.Pair;

@@ -271,6 +271,7 @@ public class WaypointGraphRenderer {
         });
     }
 
+    @SuppressWarnings("SameReturnValue")
     public static int toggleDepthTest() {
         renderThroughWalls = !renderThroughWalls;
         Output.actionBar(renderThroughWalls ? "Depth test enabled." : "Depth test disabled.", Output.Color.GOLD);

@@ -20,6 +20,7 @@ public class Output {
         chat.addMessage(Text.of(message));
     }
 
+    @SuppressWarnings("unused")
     public static void chat(Text message) {
         chat.addMessage(message);
     }
@@ -28,6 +29,7 @@ public class Output {
         chat.addMessage(Text.literal(message).setStyle(Style.EMPTY.withColor(color.formatting)));
     }
 
+    @SuppressWarnings("unused")
     public static void actionBar(String message) {
         if (MinecraftClient.getInstance().player != null)
             MinecraftClient.getInstance().player.sendMessage(Text.of(message), true);
@@ -53,9 +55,9 @@ public class Output {
     public enum Color {
         RED(Formatting.RED),
         GOLD(Formatting.GOLD),
-        AQUA(Formatting.AQUA),
-        BLUE(Formatting.BLUE),
-        GRAY(Formatting.BLUE),
+        @SuppressWarnings("unused") AQUA(Formatting.AQUA),
+        @SuppressWarnings("unused") BLUE(Formatting.BLUE),
+        @SuppressWarnings("unused") GRAY(Formatting.BLUE),
         GREEN(Formatting.GREEN);
 
         public final Formatting formatting;

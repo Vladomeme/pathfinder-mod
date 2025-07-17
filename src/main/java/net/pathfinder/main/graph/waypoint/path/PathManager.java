@@ -20,7 +20,7 @@ public class PathManager {
 
     static PathNode head;
     static PathNode nearest;
-    static List<BlockPos> swirls = new ArrayList<>();
+    static final List<BlockPos> swirls = new ArrayList<>();
     static boolean pathReached = false;
 
     static int ticks = 0;
@@ -110,6 +110,7 @@ public class PathManager {
         if (current.next == null) swirls.add(current.pos);
     }
 
+    @SuppressWarnings("unused")
     private static void displayNodes() {
         ClientWorld world = client.world;
         assert world != null;
@@ -237,6 +238,7 @@ public class PathManager {
         return head != null;
     }
 
+    @SuppressWarnings("SameReturnValue")
     public static int clear() {
         head = null;
         return 1;

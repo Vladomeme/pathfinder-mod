@@ -11,7 +11,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public class DijkstraNode implements Comparable<DijkstraNode> {
 
-    Waypoint waypoint;
+    final Waypoint waypoint;
     DijkstraNode previous;
     float distance;
 

@@ -11,7 +11,6 @@ import net.minecraft.util.math.BlockPos;
 import net.pathfinder.main.Output;
 import net.pathfinder.main.PathfinderMod;
 import net.pathfinder.main.graph.CandidateSupplier;
-import net.pathfinder.main.graph.GraphType;
 import net.pathfinder.main.graph.GraphRenderer;
 import net.pathfinder.main.graph.RuleHolder;
 import net.pathfinder.main.graph.waypoint.GraphEditor;
@@ -144,7 +143,7 @@ public class AstarBuilder {
                 return Optional.of(route);
             }
 
-            CandidateSupplier.getCandidates(world, next.currentPos, GraphType.Astar).forEach(candidate -> {
+            CandidateSupplier.getCandidates(world, next.currentPos).forEach(candidate -> {
                 AstarNode nextNode = nodes.getOrDefault(candidate.pos(), new AstarNode(candidate.pos()));
                 nodes.put(candidate.pos(), nextNode);
 

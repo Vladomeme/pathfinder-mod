@@ -18,15 +18,13 @@ import static net.pathfinder.main.graph.RuleHolder.*;
 public class CandidateSupplier {
 
     //todo wall proximity cost
-    private static GraphType type = GraphType.Base;
     private static final float SQRT2 = (float) Math.sqrt(2d);
+    @SuppressWarnings("unused")
     private static final float SQRT3 = (float) Math.sqrt(3d);
     private static final float SQRT2y = (float) Math.sqrt(2d) + 0.1f;
     private static final float SQRT3y = (float) Math.sqrt(3d) + 0.1f;
 
-    public static List<CandidateNode> getCandidates(ClientWorld world, BlockPos pos, GraphType type) {
-        CandidateSupplier.type = type;
-
+    public static List<CandidateNode> getCandidates(ClientWorld world, BlockPos pos) {
         List<CandidateNode> nodes = new ArrayList<>();
 
         moveStraight0(world, pos, -1, 0).ifPresent(nodes::add);

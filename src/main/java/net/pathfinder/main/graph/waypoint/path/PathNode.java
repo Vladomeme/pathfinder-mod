@@ -7,9 +7,9 @@ import net.minecraft.util.math.BlockPos;
  */
 public class PathNode {
 
-    BlockPos pos;
+    final BlockPos pos;
     PathNode next;
-    boolean isTeleport;
+    final boolean isTeleport;
 
     public PathNode(BlockPos pos, boolean isTeleport) {
         this.pos = pos;

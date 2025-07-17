@@ -35,7 +35,7 @@ public class BaseBuilder {
         while (!open.isEmpty()) {
             BlockPos current = open.pop();
             closed.put(current, true);
-            List<BlockPos> newNodes = CandidateSupplier.getCandidates(player.clientWorld, current, GraphType.Base)
+            List<BlockPos> newNodes = CandidateSupplier.getCandidates(player.clientWorld, current)
                     .stream().map(CandidateNode::pos).filter(pos -> !closed.containsKey(pos)).toList();
             nodeCount += newNodes.size();
             open.addAll(newNodes);
@@ -55,6 +55,7 @@ public class BaseBuilder {
         nodeCount = 1;
     }
 
+    @SuppressWarnings("SameReturnValue")
     public int clear() {
         GraphRenderer.lines.clear();
         finish();
