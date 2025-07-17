@@ -1,0 +1,6 @@
+accessWidener	v1	 named
+accessible method net/minecraft/client/option/KeyBinding reset ()V
+accessible field net/minecraft/block/AbstractBlock collidable Z
+accessible class net/minecraft/data/tag/ValueLookupTagProvider$ObjectBuilder
+accessible class net/minecraft/network/handler/PacketCodecDispatcher$PacketType
+accessible field net/minecraft/network/handler/PacketCodecDispatcher$PacketType id Ljava/lang/Object;

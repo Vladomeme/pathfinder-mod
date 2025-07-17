@@ -1,0 +1,39 @@
+{
+  "schemaVersion": 1,
+  "id": "pathfinder_mod",
+  "version": "${version}",
+
+  "name": "PF",
+  "description": "",
+  "authors": [
+    "Vladomeme"
+  ],
+  "contact": {
+  },
+
+  "license": "MIT",
+  "icon": "assets/pathfinder/icon.png",
+
+  "environment": "*",
+  "entrypoints": {
+    "client": [
+      "net.pathfinder.main.PathfinderMod"
+    ],
+    "fabric-datagen": [
+      "net.pathfinder.main.datagen.DataGenerator"
+    ],
+    "modmenu": [
+      "net.pathfinder.main.config.PFModMenu"
+    ]
+  },
+  "mixins": [
+    "pathfinder.mixins.json"
+  ],
+  "accessWidener" : "pathfinder.accesswidener",
+  "depends": {
+    "fabricloader": ">=0.14.21",
+    "fabric": "*",
+    "minecraft": "*",
+    "java": ">=17"
+  }
+}
