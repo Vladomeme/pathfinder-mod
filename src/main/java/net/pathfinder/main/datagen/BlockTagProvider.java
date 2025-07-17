@@ -36,7 +36,8 @@ public class BlockTagProvider extends FabricTagProvider.BlockTagProvider {
                 .forceAddTag(BlockTags.FENCE_GATES)
                 .add(Blocks.MOSS_CARPET)
                 .add(Blocks.SNOW)
-                .add(Blocks.LADDER);
+                .add(Blocks.LADDER)
+                .add(Blocks.LIGHT);
 
         getOrCreateTagBuilder(CARPETS)
                 .forceAddTag(BlockTags.WOOL_CARPETS)

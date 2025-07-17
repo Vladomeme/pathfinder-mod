@@ -16,7 +16,6 @@ import java.util.Objects;
 
 import static net.pathfinder.main.datagen.BlockTagProvider.*;
 
-//todo check light being passable
 //todo compress tags for performance
 /**
  * Contains "rule" methods used for determining valid path positions and distance between them.
