@@ -3,7 +3,6 @@ package net.pathfinder.main.graph.waypoint.data;
 import com.google.gson.Gson;
 import com.google.gson.stream.JsonWriter;
 import net.pathfinder.main.Output;
-import org.apache.commons.io.IOUtils;
 
 import java.io.FileWriter;
 import java.nio.charset.StandardCharsets;
@@ -47,18 +46,13 @@ public class WorldConfig {
 
     public WorldConfig write(Path path) {
         Gson gson = new Gson();
-        JsonWriter writer = null;
-        try {
-            writer = gson.newJsonWriter(new FileWriter(path.toFile(), StandardCharsets.UTF_8));
+        try (JsonWriter writer = gson.newJsonWriter(new FileWriter(path.toFile(), StandardCharsets.UTF_8))) {
             writer.setIndent("    ");
             gson.toJson(gson.toJsonTree(this, WorldConfig.class), writer);
         }
         catch (Exception e) {
             Output.logError("Couldn't save file " + path);
             Output.logError(e.getMessage());
-        }
-        finally {
-            IOUtils.closeQuietly(writer);
         }
         return this;
     }

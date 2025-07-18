@@ -7,7 +7,6 @@ import dev.isxander.yacl3.api.controller.*;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.text.Text;
-import org.apache.commons.io.IOUtils;
 
 import java.awt.*;
 import java.io.File;
@@ -62,18 +61,13 @@ public class PFConfig {
 
     public static PFConfig read() {
         PFConfig config;
-        if (!FILE.exists())
-            config = new PFConfig().write();
+        if (!FILE.exists()) config = new PFConfig().write();
         else {
-            Reader reader = null;
-            try {
-                config = new Gson().fromJson(reader = new FileReader(FILE, StandardCharsets.UTF_8), PFConfig.class);
+            try (Reader reader = new FileReader(FILE, StandardCharsets.UTF_8)) {
+                config = new Gson().fromJson(reader, PFConfig.class);
             }
             catch (Exception e) {
                 throw new RuntimeException(e);
-            }
-            finally {
-                IOUtils.closeQuietly(reader);
             }
         }
         config.onUpdate();
