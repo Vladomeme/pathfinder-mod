@@ -19,18 +19,18 @@ import net.minecraft.util.math.ChunkPos;
 import net.minecraft.util.math.Vec3d;
 import net.pathfinder.main.Output;
 import net.pathfinder.main.PathfinderMod;
-import net.pathfinder.main.config.PFConfig;
 import net.pathfinder.main.graph.RuleHolder;
 import net.pathfinder.main.graph.waypoint.data.LocationData;
 import net.pathfinder.main.graph.waypoint.data.Waypoint;
 
-import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
+
+import static net.pathfinder.main.config.PFConfig.cfg;
 
 //todo different line colors for connections between teleporters
 //todo one-way travel indicators
@@ -41,6 +41,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 public class WaypointGraphRenderer {
 
+    private static final TextRenderer tr = MinecraftClient.getInstance().textRenderer;
+
     public static final AtomicBoolean updateLocked = new AtomicBoolean(false);
 
     public static List<Pair<Vec3d, Vec3d>> lines;
@@ -49,8 +51,6 @@ public class WaypointGraphRenderer {
     public static List<Vec3d> teleportsActive;
     private static ChunkPos lastPos;
     public static boolean renderThroughWalls = false;
-
-    private static final TextRenderer tr = MinecraftClient.getInstance().textRenderer;
 
     private static final Text ENABLED_TEXT = Text.literal("Waypoint Graph Editor").setStyle(Style.EMPTY.withColor(Formatting.GREEN));
     private static final MutableText POSITION_TEXT = Text.literal("Start: ");
@@ -64,18 +64,6 @@ public class WaypointGraphRenderer {
     private static final Text CONNECTION_TEXT = Text.of("Left click a second waypoint to build a path/remove direct connection.");
     private static final Text STRAIGHT_CONNECTION_TEXT = Text.of("Left click a second waypoint to toggle their connection.");
     private static final Text SCREEN_TEXT = Text.of("Left click the selected waypoint again for location editing.");
-
-    //todo move all colours to config
-    private static final Color lineColor = new Color(0f, 1f, 1f, 1f);
-    private static final Color newLineColor = new Color(0f, 1f, 0f, 1f);
-    private static final Color startColor = new Color(1f, 1f, 1f, 1f);
-    private static final Color startFillColor = new Color(1f, 1f, 1f, 0.2f);
-    private static final Color selectedColor = new Color(0f, 1f, 0f, 1f);
-    private static final Color selectedFillColor = new Color(0f, 1f, 0f, 0.2f);
-    private static final Color selectedTargetColor = new Color(0f, 0.5f, 0.5f, 1f);
-    private static final Color selectedTargetFillColor = new Color(0f, 0.5f, 0.5f, 0.2f);
-    private static final Color teleportColor = new Color(0.5f, 0f, 0.5f, 1f);
-    private static final Color teleportFillColor = new Color(0.5f, 0f, 0.5f, 0.2f);
 
     private static final Vec3d BOX_ONE = new Vec3d(1d, 1d, 1d);
     private static final Vec3d BOX_HALF = new Vec3d(0.5d, 0.5d, 0.5d);
@@ -123,7 +111,7 @@ public class WaypointGraphRenderer {
             texts.add(NEW_PATH_TEXT);
         }
 
-        float scale = PFConfig.INSTANCE.textScale;
+        float scale = cfg.textScale;
         MatrixStack matrices = context.getMatrices();
         matrices.push();
         matrices.scale(scale, scale, scale);
@@ -141,7 +129,7 @@ public class WaypointGraphRenderer {
         if (renderThroughWalls) Renderer3d.renderThroughWalls();
 
         for (Pair<Vec3d, Vec3d> line : linesActive)
-            Renderer3d.renderLine(matrices, lineColor, line.getLeft(), line.getRight());
+            Renderer3d.renderLine(matrices, cfg.lineColour, line.getLeft(), line.getRight());
 
         LongObjectHashMap<Waypoint> oldWaypoints = GraphEditor.waypointsState;
         LongObjectHashMap<Waypoint> newWaypoints = GraphEditor.currentSelection;
@@ -158,7 +146,7 @@ public class WaypointGraphRenderer {
                         Waypoint neighbour = newWaypoints.get(id);
                         if (neighbour == null) neighbour = oldWaypoints.get(id);
 
-                        Renderer3d.renderLine(matrices, newLineColor, vec3d1, neighbour.pos().toCenterPos());
+                        Renderer3d.renderLine(matrices, cfg.newLineColour, vec3d1, neighbour.pos().toCenterPos());
                     }
                 }
             }
@@ -170,7 +158,7 @@ public class WaypointGraphRenderer {
 
         if (renderThroughWalls) Renderer3d.renderThroughWalls();
         for (Vec3d pos : teleportsActive) {
-            Renderer3d.renderEdged(matrices, teleportFillColor, teleportColor, pos, BOX_HALF);
+            Renderer3d.renderEdged(matrices, cfg.teleportFillColour, cfg.teleportColour, pos, BOX_HALF);
         }
         if (renderThroughWalls) Renderer3d.stopRenderThroughWalls();
     }
@@ -183,15 +171,15 @@ public class WaypointGraphRenderer {
         if (targeted != null) {
             if (selected != null) {
                 if (targeted != selected) {
-                    Renderer3d.renderEdged(matrices, startFillColor, startColor, targeted.vec3d(), BOX_ONE);
-                    Renderer3d.renderEdged(matrices, selectedFillColor, selectedColor, selected.vec3d(), BOX_ONE);
+                    Renderer3d.renderEdged(matrices, cfg.startFillColour, cfg.startColour, targeted.vec3d(), BOX_ONE);
+                    Renderer3d.renderEdged(matrices, cfg.selectedFillColour, cfg.selectedColour, selected.vec3d(), BOX_ONE);
                 }
-                else Renderer3d.renderEdged(matrices, selectedTargetFillColor, selectedTargetColor, targeted.vec3d(), BOX_ONE);
+                else Renderer3d.renderEdged(matrices, cfg.selectedTargetFillColour, cfg.selectedTargetColour, targeted.vec3d(), BOX_ONE);
             }
-            else Renderer3d.renderEdged(matrices, startFillColor, startColor, targeted.vec3d(), BOX_ONE);
+            else Renderer3d.renderEdged(matrices, cfg.startFillColour, cfg.startColour, targeted.vec3d(), BOX_ONE);
         }
         else if (selected != null)
-            Renderer3d.renderEdged(matrices, selectedFillColor, selectedColor, selected.vec3d(), BOX_ONE);
+            Renderer3d.renderEdged(matrices, cfg.selectedFillColour, cfg.selectedColour, selected.vec3d(), BOX_ONE);
         Renderer3d.stopRenderThroughWalls();
     }
 
@@ -253,15 +241,15 @@ public class WaypointGraphRenderer {
             //Output.chat("Range update started.");
             List<Pair<Vec3d, Vec3d>> newLines = new ArrayList<>();
             for (Pair<Vec3d, Vec3d> line : lines) {
-                if (RuleHolder.isInRange(playerPos, line.getLeft(), PFConfig.INSTANCE.renderRange)
-                        || RuleHolder.isInRange(playerPos, line.getRight(), PFConfig.INSTANCE.renderRange))
+                if (RuleHolder.isInRange(playerPos, line.getLeft(), cfg.renderRange)
+                        || RuleHolder.isInRange(playerPos, line.getRight(), cfg.renderRange))
                     newLines.add(line);
             }
             linesActive = newLines;
 
             List<Vec3d> newTeleports = new ArrayList<>();
             for (Vec3d teleport : teleports) {
-                if (RuleHolder.isInRange(playerPos, teleport, PFConfig.INSTANCE.renderRange / 2))
+                if (RuleHolder.isInRange(playerPos, teleport, cfg.renderRange / 2))
                     newTeleports.add(teleport);
             }
             teleportsActive = newTeleports;
@@ -284,15 +272,5 @@ public class WaypointGraphRenderer {
         teleports = null;
         teleportsActive = null;
         lastPos = null;
-    }
-
-    @SuppressWarnings("SameReturnValue")
-    public static int unblock() {
-        if (updateLocked.get()) {
-            updateLocked.set(false);
-            Output.chat("Waypoint graph renderer forcefully unblocked.");
-        }
-        else Output.chat("Waypoint graph renderer was not blocked.");
-        return 1;
     }
 }

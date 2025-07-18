@@ -10,6 +10,7 @@ import net.pathfinder.main.Output;
 import net.pathfinder.main.graph.*;
 
 import java.util.*;
+import static net.pathfinder.main.config.PFConfig.cfg;
 
 /**
  * Used for constructing a Base graph, which shows all locations reachable from a current one.
@@ -40,25 +41,15 @@ public class BaseBuilder {
             nodeCount += newNodes.size();
             open.addAll(newNodes);
             newNodes.forEach(pos -> links.add(new BaseLink(current, pos)));
+            if (nodeCount >= cfg.baseGraphMaxNodes) break;
         }
         Output.chat("Found " + nodeCount + " nodes with " + links.size() + " links.");
         GraphRenderer.lines.addAll(links.stream().map(link -> new Pair<>(link.left.toCenterPos(), link.right.toCenterPos())).toList());
-        finish();
-        return 1;
-    }
 
-    @SuppressWarnings("SameReturnValue")
-    public void finish() {
         links.clear();
         closed.clear();
         open.clear();
         nodeCount = 1;
-    }
-
-    @SuppressWarnings("SameReturnValue")
-    public int clear() {
-        GraphRenderer.lines.clear();
-        finish();
         return 1;
     }
 }

@@ -18,6 +18,8 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
+import static net.pathfinder.main.config.PFConfig.cfg;
+
 /**
  * Mixin used for getting left & right click inputs.=
  */
@@ -34,7 +36,7 @@ public abstract class MinecraftClientMixin {
 			cir.setReturnValue(false);
 		}
 		else if (PathfinderMod.activationKey.isPressed()) {
-			BlockHitResult hitResult = (BlockHitResult) player.raycast(RuleHolder.maxDistance, 0, false);
+			BlockHitResult hitResult = (BlockHitResult) player.raycast(cfg.maxPathDistance, 0, false);
 
 			if (hitResult.getType().equals(HitResult.Type.BLOCK)) {
                 RuleHolder.start = getPosition(hitResult);
@@ -49,7 +51,7 @@ public abstract class MinecraftClientMixin {
 	@Inject(method = "doItemUse", at = @At(value = "HEAD"), cancellable = true)
 	private void doItemUse(CallbackInfo ci) {
 		if (PathfinderMod.activationKey.isPressed() || GraphEditor.active) {
-			BlockHitResult hitResult = (BlockHitResult) player.raycast(RuleHolder.maxDistance, 0, false);
+			BlockHitResult hitResult = (BlockHitResult) player.raycast(cfg.maxPathDistance, 0, false);
 
 			if (hitResult.getType().equals(HitResult.Type.BLOCK)) {
 				BlockPos pos = getPosition(hitResult);

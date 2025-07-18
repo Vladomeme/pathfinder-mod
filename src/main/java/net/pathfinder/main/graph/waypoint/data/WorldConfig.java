@@ -13,6 +13,7 @@ import java.nio.file.Path;
 /**
  * A config with individual parameters for every world/server.
  */
+@SuppressWarnings("CanBeFinal") //temp
 public class WorldConfig {
 
     transient private Path path;

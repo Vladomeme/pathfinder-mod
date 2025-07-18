@@ -6,7 +6,6 @@ import net.minecraft.client.MinecraftClient;
 import net.minecraft.util.math.BlockPos;
 import net.pathfinder.main.Output;
 import net.pathfinder.main.PathfinderMod;
-import net.pathfinder.main.config.PFConfig;
 import net.pathfinder.main.graph.RuleHolder;
 import net.pathfinder.main.graph.astar.AstarBuilder;
 import net.pathfinder.main.graph.waypoint.data.LocationData;
@@ -16,6 +15,7 @@ import net.pathfinder.main.graph.waypoint.screen.LocationEditScreen;
 import java.util.*;
 
 import static net.pathfinder.main.graph.waypoint.EditMode.*;
+import static net.pathfinder.main.config.PFConfig.cfg;
 
 //todo undo button
 /**
@@ -90,7 +90,7 @@ public class GraphEditor {
 
         for (Waypoint waypoint : waypointsState.values()) {
             BlockPos pos = waypoint.pos();
-            if (RuleHolder.isInRange(target, pos, 50)) {
+            if (RuleHolder.isInRange(target, pos, cfg.nearestSearchRange)) {
                 int distance = RuleHolder.getSquaredDistance(target, pos);
                 if (distance < minDistance) {
                     nearest = waypoint;
@@ -100,7 +100,7 @@ public class GraphEditor {
         }
         for (Waypoint waypoint : currentSelection.values()) {
             BlockPos pos = waypoint.pos();
-            if (RuleHolder.isInRange(target, pos, 50)) {
+            if (RuleHolder.isInRange(target, pos, cfg.nearestSearchRange)) {
                 int distance = RuleHolder.getSquaredDistance(target, pos);
                 if (distance < minDistance) {
                     nearest = waypoint;
@@ -285,7 +285,7 @@ public class GraphEditor {
             return 1;
         }
         if (hasChanges) {
-            if (PFConfig.INSTANCE.appendOnSave) {
+            if (cfg.appendOnSave) {
                 Output.chat("Auto-appended unfinished changes.");
                 appendSelection();
             }
@@ -417,7 +417,7 @@ public class GraphEditor {
 
         Set<Waypoint> graph1options = new HashSet<>();
         Set<Waypoint> graph2options = new HashSet<>();
-        int range = PFConfig.INSTANCE.gapSearchStartingRange;
+        int range = cfg.gapSearchStartingRange;
 
         while (graph1options.isEmpty() || graph2options.isEmpty()) {
             for (Waypoint w1 : graph1.values()) {
@@ -484,12 +484,12 @@ public class GraphEditor {
             WaypointIO.data.locations.forEach((key, value) -> locationsState.put(key, value.copy()));
             currentSelection = new LongObjectHashMap<>();
             WaypointGraphRenderer.updateRender();
+            active = true;
         }
         else {
             save();
             clear();
         }
-        active = !active;
         Output.actionBar(active ? "Graph editing enabled." : "Graph editing disabled.", Output.Color.GOLD);
         return 1;
     }

@@ -18,46 +18,76 @@ import java.nio.charset.StandardCharsets;
 /**
  * Main config which determines the behavior of the mod in general. Uses YetAnotherConfigLib for the edit screen.
  */
-//todo move cost parameters to config
 //todo add a direction change cost modifier
 public class PFConfig {
 
-    public int renderRange = 50;
-    public float textScale = 0.75f;
-    public int maxPathDistance = 50;
-    public int gapSearchStartingRange = 20;
-    public transient int maxPathDistanceSquared = 2500;
-    public boolean appendOnSave = false;
-
-    public int buttonInactiveColor = -2236963;
-    public int buttonNegativeColor = -1823700;
-    public int buttonPositiveColor = -6226016;
-    public int buttonActiveColor = -9737764;
-    public int backgroundColor = 866822826;
-    public int borderColor = -1;
-    public int textColor = -1;
-
-//    public int overlayColour = 1358954495;
-//    public transient float[] overlay4F = getComponents(overlayColour);
-//
-//    public int targetColour = 1342218495;
-//    public transient float[] target4F = getComponents(targetColour);
-//
-//    public int selectionColour = 1342242640;
-//    public transient float[] selection4F = getComponents(selectionColour);
-//
-//    public int selectionTargetColour = 1342208060;
-//    public transient float[] selectionTarget4F = getComponents(selectionTargetColour);
-//
-//    public int rangeColour = -50116;
-//    public transient float[] range4F = getComponents(rangeColour);
-//
-//    public int highlightRange = 64;
-//    public transient int squaredRange = 4096;
-
     private static final File FILE = new File(FabricLoader.getInstance().getConfigDir().toFile(), "pathfinder.json");
+    public static final PFConfig cfg = read();
 
-    public static final PFConfig INSTANCE = read();
+    //### GENERAL
+    public int maxOffGraphDistance = 200;
+    public int recomputingDistance = 20;
+    public int destinationRange = 4;
+
+    public transient int destinationRangeSquared = destinationRange * destinationRange;
+    public transient int recomputingDistanceSquared = recomputingDistance * recomputingDistance;
+    //### EDITING
+    //Behaviour
+    public boolean appendOnSave = false;
+    public boolean useAstarSmoothing = true;
+    public boolean useAstarOptimizing = true;
+    public boolean saveUncompressedData = false;
+    public int baseGraphMaxNodes = 20000;
+    //Ranges
+    public int maxPathDistance = 80;
+    public int gapSearchStartingRange = 20;
+    public int nearestSearchRange = 50;
+    public int targetMaxDistance = 30;
+    public int targetMaxAngle = 15;
+    public boolean targetLoSCheck = true;
+
+    public transient int maxPathDistanceSquared = maxPathDistance * maxPathDistance;
+    public transient double targetMaxAngleRad = Math.toRadians(targetMaxAngle);
+    //Costs
+    public float straightCost = 1.0f;
+    public float verticalCost = 2.0f;
+    public float diagonalCost = (float) Math.sqrt(2d);
+    public float cubeDiagonalCost = (float) Math.sqrt(3d);
+    public float yChangeCost = 0.1f;
+    public float stairsCost = 1.0f;
+    public float waterMulti = 2.0f;
+    public float cobwebMulti = 10.0f;
+    //### RENDERING
+    public int renderRange = 64;
+    public float textScale = 0.75f;
+    public int pathDisplayLength = 50;
+    public float pathParticleStep = 0.333f;
+    //Graph colours
+    public int lineColourRaw = -16711681;
+    public int newLineColourRaw = -16711936;
+    public int startColourRaw = -1;
+    public int selectedColourRaw = -16711936;
+    public int selectedTargetColourRaw = -16744320;
+    public int teleportColourRaw = -8388480;
+
+    public transient Color lineColour = toColor(lineColourRaw);
+    public transient Color newLineColour = toColor(newLineColourRaw);
+    public transient Color startColour = toColor(startColourRaw);
+    public transient Color startFillColour = toFillColor(startColourRaw);
+    public transient Color selectedColour = toColor(selectedColourRaw);
+    public transient Color selectedFillColour = toFillColor(selectedColourRaw);
+    public transient Color selectedTargetColour = toColor(selectedTargetColourRaw);
+    public transient Color selectedTargetFillColour = toFillColor(selectedTargetColourRaw);
+    public transient Color teleportColour = toColor(teleportColourRaw);
+    public transient Color teleportFillColour = toFillColor(teleportColourRaw);
+    //Screen colours
+    public int buttonInactiveColour = -2236963;
+    public int buttonNegativeColour = -1823700;
+    public int buttonPositiveColour = -6226016;
+    public int buttonActiveColour = -9737764;
+    public int backgroundColour = 866822826;
+    public int borderColour = -1;
+    public int textColour = -1;
 
     public static PFConfig read() {
         PFConfig config;
@@ -75,22 +105,45 @@ public class PFConfig {
     }
     
     private void onUpdate() {
+        destinationRangeSquared = destinationRange * destinationRange;
         maxPathDistanceSquared = maxPathDistance * maxPathDistance;
+        recomputingDistanceSquared = recomputingDistance * recomputingDistance;
+
+        targetMaxAngleRad = Math.toRadians(targetMaxAngle);
+
+        lineColour = toColor(lineColourRaw);
+        newLineColour = toColor(newLineColourRaw);
+        startColour = toColor(startColourRaw);
+        startFillColour = toFillColor(startColourRaw);
+        selectedColour = toColor(selectedColourRaw);
+        selectedFillColour = toFillColor(selectedColourRaw);
+        selectedTargetColour = toColor(selectedTargetColourRaw);
+        selectedTargetFillColour = toFillColor(selectedTargetColourRaw);
+        teleportColour = toColor(teleportColourRaw);
+        teleportFillColour = toFillColor(teleportColourRaw);
+    }
+
+    private Color toColor(int colour) {
+        return new Color(colour, true);
+    }
+
+    private Color toFillColor(int colour) {
+        return new Color((colour & 0xffffff) | (50 << 24), true);
+    }
+
+    private float[] getComponents(int colour) {
+        return new float[]{(float) (colour >> 16 & 255) / 255, (float) (colour >> 8 & 255) / 255,
+                (float) (colour & 255) / 255, (float) (colour >>> 24) / 255};
     }
 
     public PFConfig write() {
         Gson gson = new Gson();
-        JsonWriter writer = null;
-        try {
-            writer = gson.newJsonWriter(new FileWriter(FILE, StandardCharsets.UTF_8));
+        try (JsonWriter writer = gson.newJsonWriter(new FileWriter(FILE, StandardCharsets.UTF_8))) {
             writer.setIndent("    ");
             gson.toJson(gson.toJsonTree(this, PFConfig.class), writer);
         }
         catch (Exception e) {
             throw new RuntimeException(e);
-        }
-        finally {
-            IOUtils.closeQuietly(writer);
         }
         onUpdate();
         return this;
@@ -99,10 +152,140 @@ public class PFConfig {
     public Screen create(Screen parent) {
         return YetAnotherConfigLib.createBuilder()
                 .save(this::write)
-                .title(Text.literal("GSE Display"))
+                .title(Text.literal("Pathfinder Global Settings"))
 
                 .category(ConfigCategory.createBuilder()
-                        .name(Text.literal("General"))
+                        .name(Text.of("General"))
+
+                        .option(Option.<Integer>createBuilder()
+                                .name(Text.literal("Max off-graph path distance"))
+                                .binding(200, () -> maxOffGraphDistance, newVal -> maxOffGraphDistance = newVal)
+                                .controller(IntegerFieldControllerBuilder::create).build())
+
+                        .option(Option.<Integer>createBuilder()
+                                .name(Text.literal("Path recomputing distance"))
+                                .binding(20, () -> recomputingDistance, newVal -> recomputingDistance = newVal)
+                                .controller(IntegerFieldControllerBuilder::create).build())
+
+                        .option(Option.<Integer>createBuilder()
+                                .name(Text.literal("Destination reach range"))
+                                .binding(4, () -> destinationRange, newVal -> destinationRange = newVal)
+                                .controller(IntegerFieldControllerBuilder::create).build())
+                        .build())
+
+                .category(ConfigCategory.createBuilder()
+                        .name(Text.literal("Editing"))
+
+                        .group(OptionGroup.createBuilder()
+                                .name(Text.literal("Behaviour"))
+
+                                .option(Option.<Boolean>createBuilder()
+                                        .name(Text.literal("Auto-append on save"))
+                                        .binding(false, () -> appendOnSave, newVal -> appendOnSave = newVal)
+                                        .controller(TickBoxControllerBuilder::create).build())
+
+                                .option(Option.<Boolean>createBuilder()
+                                        .name(Text.literal("Use A* path smoothing"))
+                                        .binding(false, () -> useAstarSmoothing, newVal -> useAstarSmoothing = newVal)
+                                        .controller(TickBoxControllerBuilder::create).build())
+
+                                .option(Option.<Boolean>createBuilder()
+                                        .name(Text.literal("Use A* path optimizing"))
+                                        .binding(false, () -> useAstarOptimizing, newVal -> useAstarOptimizing = newVal)
+                                        .controller(TickBoxControllerBuilder::create).build())
+
+                                .option(Option.<Boolean>createBuilder()
+                                        .name(Text.literal("Save uncompressed data"))
+                                        .binding(false, () -> saveUncompressedData, newVal -> saveUncompressedData = newVal)
+                                        .controller(TickBoxControllerBuilder::create).build())
+
+                                .option(Option.<Integer>createBuilder()
+                                        .name(Text.literal("Max base graph node count"))
+                                        .binding(20000, () -> baseGraphMaxNodes, newVal -> baseGraphMaxNodes = newVal)
+                                        .controller(IntegerFieldControllerBuilder::create).build())
+                                .build())
+
+                        .group(OptionGroup.createBuilder()
+                                .name(Text.literal("Ranges"))
+
+                                .option(Option.<Integer>createBuilder()
+                                        .name(Text.literal("Max base-pathfinding distance"))
+                                        .binding(80, () -> maxPathDistance, newVal -> maxPathDistance = newVal)
+                                        .controller(IntegerFieldControllerBuilder::create).build())
+
+                                .option(Option.<Integer>createBuilder()
+                                        .name(Text.literal("Graph gap search starting range"))
+                                        .binding(50, () -> gapSearchStartingRange, newVal -> gapSearchStartingRange = newVal)
+                                        .controller(IntegerFieldControllerBuilder::create).build())
+
+                                .option(Option.<Integer>createBuilder()
+                                        .name(Text.literal("Nearest waypoint search range"))
+                                        .binding(50, () -> nearestSearchRange, newVal -> nearestSearchRange = newVal)
+                                        .controller(IntegerFieldControllerBuilder::create).build())
+
+                                .option(Option.<Integer>createBuilder()
+                                        .name(Text.literal("Max target distance"))
+                                        .binding(50, () -> targetMaxDistance, newVal -> targetMaxDistance = newVal)
+                                        .controller(IntegerFieldControllerBuilder::create).build())
+
+                                .option(Option.<Integer>createBuilder()
+                                        .name(Text.literal("Max target angle"))
+                                        .binding(15, () -> targetMaxAngle, newVal -> targetMaxAngle = newVal)
+                                        .controller(IntegerFieldControllerBuilder::create).build())
+
+                                .option(Option.<Boolean>createBuilder()
+                                        .name(Text.literal("Require line of sight for targeting"))
+                                        .binding(true, () -> targetLoSCheck, newVal -> targetLoSCheck = newVal)
+                                        .controller(TickBoxControllerBuilder::create).build())
+                                .build())
+
+                        .group(OptionGroup.createBuilder()
+                                .name(Text.literal("Costs"))
+
+                                .option(Option.<Float>createBuilder()
+                                        .name(Text.literal("Horizontal movement cost"))
+                                        .binding(1.0f, () -> straightCost, newVal -> straightCost = newVal)
+                                        .controller(FloatFieldControllerBuilder::create).build())
+
+                                .option(Option.<Float>createBuilder()
+                                        .name(Text.literal("Vertical movement cost"))
+                                        .binding(2.0f, () -> verticalCost, newVal -> verticalCost = newVal)
+                                        .controller(FloatFieldControllerBuilder::create).build())
+
+                                .option(Option.<Float>createBuilder()
+                                        .name(Text.literal("Diagonal movement cost"))
+                                        .binding((float) Math.sqrt(2d), () -> diagonalCost, newVal -> diagonalCost = newVal)
+                                        .controller(FloatFieldControllerBuilder::create).build())
+
+                                .option(Option.<Float>createBuilder()
+                                        .name(Text.literal("Cube diagonal movement cost"))
+                                        .binding((float) Math.sqrt(3d), () -> cubeDiagonalCost, newVal -> cubeDiagonalCost = newVal)
+                                        .controller(FloatFieldControllerBuilder::create).build())
+
+                                .option(Option.<Float>createBuilder()
+                                        .name(Text.literal("Y-level change cost"))
+                                        .binding(0.1f, () -> yChangeCost, newVal -> yChangeCost = newVal)
+                                        .controller(FloatFieldControllerBuilder::create).build())
+
+                                .option(Option.<Float>createBuilder()
+                                        .name(Text.literal("Stairs movement cost"))
+                                        .binding(1.0f, () -> stairsCost, newVal -> stairsCost = newVal)
+                                        .controller(FloatFieldControllerBuilder::create).build())
+
+                                .option(Option.<Float>createBuilder()
+                                        .name(Text.literal("Water movement cost multiplier"))
+                                        .binding(2.0f, () -> waterMulti, newVal -> waterMulti = newVal)
+                                        .controller(FloatFieldControllerBuilder::create).build())
+
+                                .option(Option.<Float>createBuilder()
+                                        .name(Text.literal("Cobweb movement cost multiplier"))
+                                        .binding(10.0f, () -> cobwebMulti, newVal -> cobwebMulti = newVal)
+                                        .controller(FloatFieldControllerBuilder::create).build())
+                                .build())
+                        .build())
+
+                .category(ConfigCategory.createBuilder()
+                        .name(Text.of("Rendering"))
 
                         .option(Option.<Integer>createBuilder()
                                 .name(Text.literal("Graph render range"))
@@ -115,109 +298,103 @@ public class PFConfig {
                                 .controller(FloatFieldControllerBuilder::create).build())
 
                         .option(Option.<Integer>createBuilder()
-                                .name(Text.literal("Max path distance"))
-                                .binding(50, () -> maxPathDistance, newVal -> maxPathDistance = newVal)
+                                .name(Text.literal("Path display length"))
+                                .binding(50, () -> pathDisplayLength, newVal -> pathDisplayLength = newVal)
                                 .controller(IntegerFieldControllerBuilder::create).build())
 
-                        .option(Option.<Color>createBuilder()
-                                .name(Text.literal("Inactive button color"))
-                                .binding(new Color(-2236963, true),
-                                        () -> new Color(buttonInactiveColor, true), newVal -> buttonInactiveColor = newVal.getRGB())
-                                .controller(opt -> ColorControllerBuilder.create(opt).allowAlpha(true)).build())
+                        .option(Option.<Float>createBuilder()
+                                .name(Text.literal("Path particle step"))
+                                .binding(0.333f, () -> pathParticleStep, newVal -> pathParticleStep = newVal)
+                                .controller(FloatFieldControllerBuilder::create).build())
 
-                        .option(Option.<Color>createBuilder()
-                                .name(Text.literal("Negative button color"))
-                                .binding(new Color(-1823700, true),
-                                        () -> new Color(buttonNegativeColor, true), newVal -> buttonNegativeColor = newVal.getRGB())
-                                .controller(opt -> ColorControllerBuilder.create(opt).allowAlpha(true)).build())
+                        .group(OptionGroup.createBuilder()
+                                .name(Text.of("Graph colours"))
 
-                        .option(Option.<Color>createBuilder()
-                                .name(Text.literal("Positive button color"))
-                                .binding(new Color(-6226016, true),
-                                        () -> new Color(buttonPositiveColor, true), newVal -> buttonPositiveColor = newVal.getRGB())
-                                .controller(opt -> ColorControllerBuilder.create(opt).allowAlpha(true)).build())
+                                .option(Option.<Color>createBuilder()
+                                        .name(Text.literal("Graph line"))
+                                        .binding(new Color(-16711681, true),
+                                                () -> new Color(lineColourRaw, true), newVal -> lineColourRaw = newVal.getRGB())
+                                        .controller(opt -> ColorControllerBuilder.create(opt).allowAlpha(true)).build())
 
-                        .option(Option.<Color>createBuilder()
-                                .name(Text.literal("Active button color"))
-                                .binding(new Color(-9737764, true),
-                                        () -> new Color(buttonActiveColor, true), newVal -> buttonActiveColor = newVal.getRGB())
-                                .controller(opt -> ColorControllerBuilder.create(opt).allowAlpha(true)).build())
+                                .option(Option.<Color>createBuilder()
+                                        .name(Text.literal("New graph line"))
+                                        .binding(new Color(-16711936, true),
+                                                () -> new Color(newLineColourRaw, true), newVal -> newLineColourRaw = newVal.getRGB())
+                                        .controller(opt -> ColorControllerBuilder.create(opt).allowAlpha(true)).build())
 
-                        .option(Option.<Color>createBuilder()
-                                .name(Text.literal("Menu background color"))
-                                .binding(new Color(866822826, true),
-                                        () -> new Color(backgroundColor, true), newVal -> backgroundColor = newVal.getRGB())
-                                .controller(opt -> ColorControllerBuilder.create(opt).allowAlpha(true)).build())
+                                .option(Option.<Color>createBuilder()
+                                        .name(Text.literal("Targeted waypoint"))
+                                        .binding(new Color(-1, true),
+                                                () -> new Color(startColourRaw, true), newVal -> startColourRaw = newVal.getRGB())
+                                        .controller(opt -> ColorControllerBuilder.create(opt).allowAlpha(true)).build())
 
-                        .option(Option.<Color>createBuilder()
-                                .name(Text.literal("Menu border color"))
-                                .binding(new Color(-1, true),
-                                        () -> new Color(borderColor, true), newVal -> borderColor = newVal.getRGB())
-                                .controller(opt -> ColorControllerBuilder.create(opt).allowAlpha(true)).build())
+                                .option(Option.<Color>createBuilder()
+                                        .name(Text.literal("Selected waypoint"))
+                                        .binding(new Color(-16711936, true),
+                                                () -> new Color(selectedColourRaw, true), newVal -> selectedColourRaw = newVal.getRGB())
+                                        .controller(opt -> ColorControllerBuilder.create(opt).allowAlpha(true)).build())
 
-                        .option(Option.<Color>createBuilder()
-                                .name(Text.literal("Text color"))
-                                .binding(new Color(-1, true),
-                                        () -> new Color(textColor, true), newVal -> textColor = newVal.getRGB())
-                                .controller(opt -> ColorControllerBuilder.create(opt).allowAlpha(true)).build())
+                                .option(Option.<Color>createBuilder()
+                                        .name(Text.literal("Selected & targeted waypoint"))
+                                        .binding(new Color(-16744320, true),
+                                                () -> new Color(selectedTargetColourRaw, true), newVal -> selectedTargetColourRaw = newVal.getRGB())
+                                        .controller(opt -> ColorControllerBuilder.create(opt).allowAlpha(true)).build())
+
+                                .option(Option.<Color>createBuilder()
+                                        .name(Text.literal("Teleport marker"))
+                                        .binding(new Color(-8388480, true),
+                                                () -> new Color(teleportColourRaw, true), newVal -> teleportColourRaw = newVal.getRGB())
+                                        .controller(opt -> ColorControllerBuilder.create(opt).allowAlpha(true)).build())
+
+                                .build())
+
+                        .group(OptionGroup.createBuilder()
+                                .name(Text.of("Screen colours"))
+
+                                .option(Option.<Color>createBuilder()
+                                        .name(Text.literal("Button: inactive"))
+                                        .binding(new Color(-2236963, true),
+                                                () -> new Color(buttonInactiveColour, true), newVal -> buttonInactiveColour = newVal.getRGB())
+                                        .controller(opt -> ColorControllerBuilder.create(opt).allowAlpha(true)).build())
+
+                                .option(Option.<Color>createBuilder()
+                                        .name(Text.literal("Button: negative"))
+                                        .binding(new Color(-1823700, true),
+                                                () -> new Color(buttonNegativeColour, true), newVal -> buttonNegativeColour = newVal.getRGB())
+                                        .controller(opt -> ColorControllerBuilder.create(opt).allowAlpha(true)).build())
+
+                                .option(Option.<Color>createBuilder()
+                                        .name(Text.literal("Button: positive"))
+                                        .binding(new Color(-6226016, true),
+                                                () -> new Color(buttonPositiveColour, true), newVal -> buttonPositiveColour = newVal.getRGB())
+                                        .controller(opt -> ColorControllerBuilder.create(opt).allowAlpha(true)).build())
+
+                                .option(Option.<Color>createBuilder()
+                                        .name(Text.literal("Button: active"))
+                                        .binding(new Color(-9737764, true),
+                                                () -> new Color(buttonActiveColour, true), newVal -> buttonActiveColour = newVal.getRGB())
+                                        .controller(opt -> ColorControllerBuilder.create(opt).allowAlpha(true)).build())
+
+                                .option(Option.<Color>createBuilder()
+                                        .name(Text.literal("Menu background"))
+                                        .binding(new Color(866822826, true),
+                                                () -> new Color(backgroundColour, true), newVal -> backgroundColour = newVal.getRGB())
+                                        .controller(opt -> ColorControllerBuilder.create(opt).allowAlpha(true)).build())
+
+                                .option(Option.<Color>createBuilder()
+                                        .name(Text.literal("Menu border"))
+                                        .binding(new Color(-1, true),
+                                                () -> new Color(borderColour, true), newVal -> borderColour = newVal.getRGB())
+                                        .controller(opt -> ColorControllerBuilder.create(opt).allowAlpha(true)).build())
+
+                                .option(Option.<Color>createBuilder()
+                                        .name(Text.literal("Text"))
+                                        .binding(new Color(-1, true),
+                                                () -> new Color(textColour, true), newVal -> textColour = newVal.getRGB())
+                                        .controller(opt -> ColorControllerBuilder.create(opt).allowAlpha(true)).build())
+                                .build())
                         .build())
                 .build()
                 .generateScreen(parent);
-//                        .option(Option.<Boolean>createBuilder()
-//                                .name(Text.literal("Enabled"))
-//                                .binding(true, () -> enabled, newVal -> enabled = newVal)
-//                                .controller(TickBoxControllerBuilder::create).build())
-//
-//                        .option(Option.<Boolean>createBuilder()
-//                                .name(Text.literal("Display range"))
-//                                .binding(false, () -> showRange, newVal -> showRange = newVal)
-//                                .controller(TickBoxControllerBuilder::create).build())
-//
-//                        .option(Option.<Boolean>createBuilder()
-//                                .name(Text.literal("Display icons"))
-//                                .binding(true, () -> showIcons, newVal -> showIcons = newVal)
-//                                .controller(TickBoxControllerBuilder::create).build())
-//
-//                        .option(Option.<Color>createBuilder()
-//                                .name(Text.literal("Overlay colour"))
-//                                .binding(new Color(1358954495, true),
-//                                        () -> new Color(overlayColour, true), newVal -> overlayColour = newVal.getRGB())
-//                                .controller(opt -> ColorControllerBuilder.create(opt).allowAlpha(true)).build())
-//
-//                        .option(Option.<Color>createBuilder()
-//                                .name(Text.literal("Target colour"))
-//                                .binding(new Color(1342218495, true),
-//                                        () -> new Color(targetColour, true), newVal -> targetColour = newVal.getRGB())
-//                                .controller(opt -> ColorControllerBuilder.create(opt).allowAlpha(true)).build())
-//
-//                        .option(Option.<Color>createBuilder()
-//                                .name(Text.literal("Selection colour"))
-//                                .binding(new Color(1342242640, true),
-//                                        () -> new Color(selectionColour, true), newVal -> selectionColour = newVal.getRGB())
-//                                .controller(opt -> ColorControllerBuilder.create(opt).allowAlpha(true)).build())
-//
-//                        .option(Option.<Color>createBuilder()
-//                                .name(Text.literal("Selection & Target colour"))
-//                                .binding(new Color(1342208060, true),
-//                                        () -> new Color(selectionTargetColour, true), newVal -> selectionTargetColour = newVal.getRGB())
-//                                .controller(opt -> ColorControllerBuilder.create(opt).allowAlpha(true)).build())
-//
-//                        .option(Option.<Color>createBuilder()
-//                                .name(Text.literal("Spawner range colour"))
-//                                .binding(new Color(-50116, true),
-//                                        () -> new Color(rangeColour, true), newVal -> rangeColour = newVal.getRGB())
-//                                .controller(opt -> ColorControllerBuilder.create(opt).allowAlpha(true)).build())
-//
-//                        .option(Option.<Integer>createBuilder()
-//                                .name(Text.literal("Highlight Range"))
-//                                .description(OptionDescription.of(Text.of("Max distance for highlighting spawners.")))
-//                                .binding(30, () -> highlightRange, newVal -> highlightRange = newVal)
-//                                .controller(IntegerFieldControllerBuilder::create).build())
-//                        .build())
     }
-
-//    private float[] getComponents(int colour) {
-//        return new float[]{(float) (colour >> 16 & 255) / 255, (float) (colour >> 8 & 255) / 255,
-//                (float) (colour & 255) / 255, (float) (colour >>> 24) / 255};
-//    }
 }

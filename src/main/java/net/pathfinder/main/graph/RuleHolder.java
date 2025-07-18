@@ -8,13 +8,13 @@ import net.minecraft.client.world.ClientWorld;
 import net.minecraft.registry.tag.BlockTags;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
-import net.pathfinder.main.config.PFConfig;
 import net.pathfinder.main.graph.waypoint.GraphEditor;
 import net.pathfinder.main.graph.waypoint.data.Waypoint;
 
 import java.util.Objects;
 
 import static net.pathfinder.main.datagen.BlockTagProvider.*;
+import static net.pathfinder.main.config.PFConfig.cfg;
 
 //todo compress tags for performance
 /**
@@ -27,7 +27,6 @@ public class RuleHolder {
     public static Vec3d start3d;
     public static BlockPos target;
     public static Vec3d target3d;
-    public static final int maxDistance = 50;
 
     public static boolean isPassable(ClientWorld world, BlockPos pos, int xVec, int yVec, int zVec) {
         BlockState state = world.getBlockState(pos.mutableCopy().add(xVec, yVec, zVec));
@@ -137,9 +136,9 @@ public class RuleHolder {
     public static boolean outOfRangeTrue(BlockPos pos) {
         if (GraphEditor.active && GraphEditor.selected != null) {
             Waypoint origin = GraphEditor.selected;
-            return PFConfig.INSTANCE.maxPathDistanceSquared < getSquaredDistance(origin.x(), origin.y(), origin.z(), pos.getX(), pos.getY(), pos.getZ());
+            return cfg.maxPathDistanceSquared < getSquaredDistance(origin.x(), origin.y(), origin.z(), pos.getX(), pos.getY(), pos.getZ());
         }
-        return PFConfig.INSTANCE.maxPathDistanceSquared < getSquaredDistance(start.getX(), start.getY(), start.getZ(), pos.getX(), pos.getY(), pos.getZ());
+        return cfg.maxPathDistanceSquared < getSquaredDistance(start.getX(), start.getY(), start.getZ(), pos.getX(), pos.getY(), pos.getZ());
     }
 
     public static float getDistance(float x1, float y1, float z1, float x2, float y2, float z2) {

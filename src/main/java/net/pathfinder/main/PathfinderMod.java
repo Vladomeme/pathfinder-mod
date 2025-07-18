@@ -37,7 +37,8 @@ import static net.fabricmc.fabric.api.client.command.v2.ClientCommandManager.lit
 
 //todo cleanup assertions
 //todo de-static everything
-
+//todo choose a better mod name
+//todo translations
 /**
  * Mod entrypoint class, containing various methods for initializing different hooks, as well as utility methods.
  */
@@ -68,29 +69,17 @@ public class PathfinderMod implements ClientModInitializer {
                 .then(literal("toggle_render")
                         .executes(context -> GraphRenderer.toggleRender()))
                 .then(literal("base")
-                        .executes(BaseBuilder.INSTANCE::compute)
-                        .then(literal("clear")
-                                .executes(context -> BaseBuilder.INSTANCE.clear())))
+                        .executes(BaseBuilder.INSTANCE::compute))
                 .then(literal("astar")
                         .then(argument("x", IntegerArgumentType.integer())
                                 .then(argument("y", IntegerArgumentType.integer())
                                         .then(argument("z", IntegerArgumentType.integer())
-                                                .executes(AstarBuilder::findRoute))))
-                        .then(literal("toggle_smoothing")
-                                .executes(context -> AstarBuilder.toggleSmoothing()))
-                        .then(literal("toggle_optimization")
-                                .executes(context -> AstarBuilder.toggleOptimization()))
-                        .then(literal("clear")
-                                .executes(context -> AstarBuilder.clear()))
-                        .then(literal("unlock")
-                                .executes(context -> AstarBuilder.unblock())))
+                                                .executes(AstarBuilder::findRoute)))))
                 .then(literal("clear")
                         .executes(context -> clear()))
+                .then(literal("toggle_editing")
+                        .executes(context -> GraphEditor.toggleEditing()))
                 .then(literal("waypoint")
-                        .then(literal("unlock_render")
-                                .executes(context -> WaypointGraphRenderer.unblock()))
-                        .then(literal("toggle_editing")
-                                .executes(context -> GraphEditor.toggleEditing()))
                         .then(literal("toggle_depth_test")
                                 .executes(context -> WaypointGraphRenderer.toggleDepthTest()))
                         .then(literal("discard")
@@ -146,7 +135,7 @@ public class PathfinderMod implements ClientModInitializer {
         if (Screen.hasAltDown()) GraphEditor.selected = null; //Deselect a waypoint
         else TargetHolder.updateTargeted();
 
-        if (InputUtil.isKeyPressed(MinecraftClient.getInstance().getWindow().getHandle(), 261))
+        if (InputUtil.isKeyPressed(MinecraftClient.getInstance().getWindow().getHandle(), 261)) //Delete key
             GraphEditor.removeSelected(); //Remove selected waypoint
 
         if (modeToggleKey.wasPressed()) {
@@ -165,8 +154,7 @@ public class PathfinderMod implements ClientModInitializer {
 
     @SuppressWarnings("SameReturnValue")
     private int clear() {
-        BaseBuilder.INSTANCE.clear();
-        AstarBuilder.clear();
+        GraphRenderer.lines.clear();
         RuleHolder.clear();
         GraphEditor.clear();
         PathManager.clear();

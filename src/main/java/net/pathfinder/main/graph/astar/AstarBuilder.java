@@ -19,15 +19,14 @@ import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
+import static net.pathfinder.main.config.PFConfig.cfg;
+
 /**
  * Contains the A* algorithm and methods related to it.
  */
 public class AstarBuilder {
 
     private static boolean inProcess = false;
-
-    static boolean smoothingEnabled = true;
-    static boolean optimizationEnabled = true;
 
     /**
      * Calculates and displays the path when either position is moved outside of waypoint graph editing mode.
@@ -37,7 +36,7 @@ public class AstarBuilder {
         inProcess = true;
 
         PathfinderMod.executor.submit(() -> {
-            clear();
+            GraphRenderer.lines.clear();
             ClientPlayerEntity player = MinecraftClient.getInstance().player;
             if (player == null) {
                 inProcess = false;
@@ -96,7 +95,7 @@ public class AstarBuilder {
         inProcess = true;
 
         PathfinderMod.executor.submit(() -> {
-            clear();
+            GraphRenderer.lines.clear();
 
             ClientPlayerEntity player = context.getSource().getPlayer();
             ClientWorld world = context.getSource().getWorld();
@@ -163,8 +162,8 @@ public class AstarBuilder {
      * Processes found paths according to config, displays them if waypoint graph editor is inactive.
      */
     private static List<BlockPos> processResults(ClientWorld world, List<BlockPos> path) {
-        if (smoothingEnabled) applySmoothing(world, path);
-        if (optimizationEnabled) optimizePath(path);
+        if (cfg.useAstarSmoothing) applySmoothing(world, path);
+        if (cfg.useAstarOptimizing) optimizePath(path);
         if (!GraphEditor.active) setRenderPath(path);
         Output.chat("Found path with " + path.size() + " nodes.");
         return path;
@@ -191,6 +190,7 @@ public class AstarBuilder {
         }
     }
 
+    //todo invalidate links going over water and climbable shit
     /**
      * Used in path smoothing to check if smoothed path segments are traversable.
      */
@@ -272,35 +272,5 @@ public class AstarBuilder {
     private static void setRenderPath(List<BlockPos> path) {
         for (int i = 0; i < path.size() - 1; i++)
             GraphRenderer.lines.add(new Pair<>(path.get(i).toCenterPos(), path.get(i + 1).toCenterPos()));
-    }
-
-    @SuppressWarnings("SameReturnValue")
-    public static int toggleSmoothing() {
-        smoothingEnabled = !smoothingEnabled;
-        Output.actionBar(smoothingEnabled ? "Path smoothing enabled." : "Path smoothing disabled.", Output.Color.GOLD);
-        return 1;
-    }
-
-    @SuppressWarnings("SameReturnValue")
-    public static int toggleOptimization() {
-        optimizationEnabled = !optimizationEnabled;
-        Output.actionBar(optimizationEnabled ? "Path optimization enabled." : "Path optimization disabled.", Output.Color.GOLD);
-        return 1;
-    }
-
-    @SuppressWarnings("SameReturnValue")
-    public static int clear() {
-        GraphRenderer.lines.clear();
-        return 1;
-    }
-
-    @SuppressWarnings("SameReturnValue")
-    public static int unblock() {
-        if (inProcess) {
-            inProcess = false;
-            Output.chat("A* builder forcefully unblocked.");
-        }
-        else Output.chat("A* builder was not blocked.");
-        return 1;
     }
 }

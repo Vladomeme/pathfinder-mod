@@ -14,6 +14,8 @@ import net.pathfinder.main.graph.RuleHolder;
 import java.util.ArrayList;
 import java.util.List;
 
+import static net.pathfinder.main.config.PFConfig.cfg;
+
 public class PathManager {
 
     private static final MinecraftClient client = MinecraftClient.getInstance();
@@ -84,19 +86,19 @@ public class PathManager {
             }
             current = current.next;
         }
-        if (RuleHolder.getSquaredDistance(nearest.getLast().pos) < 16) {
+        if (RuleHolder.getSquaredDistance(nearest.getLast().pos) < cfg.destinationRangeSquared) {
             Output.chat("Destination reached!", Output.Color.GREEN);
             clear();
             return;
         }
         if (minDistance < 25) pathReached = true;
-        else if (minDistance > 400 && pathReached) recompute();
+        else if (minDistance > cfg.recomputingDistanceSquared && pathReached) recompute();
         updateSwirls();
     }
 
     private static void updateSwirls() {
         swirls.clear();
-        double travelDistance = 30;
+        double travelDistance = cfg.pathDisplayLength;
 
         PathNode current = nearest;
         travelDistance -= RuleHolder.getDistance(current.pos);
@@ -129,8 +131,7 @@ public class PathManager {
         assert client.player != null;
 
         int i = 0;
-
-        int pathLength = 50 * 3;
+        float pathLength = cfg.pathDisplayLength * (1 / cfg.pathParticleStep);
 
         //Last node shortcut
         if (nearest.next == null) {
@@ -138,7 +139,7 @@ public class PathManager {
             float localDistance = 0;
             while (i++ < pathLength && localDistance < distance) {
                 addPathParticles(localDistance / distance, client.player.getBlockPos(), nearest.pos);
-                localDistance += 0.33f;
+                localDistance += cfg.pathParticleStep;
             }
             return;
         }
@@ -149,7 +150,7 @@ public class PathManager {
         float localDistance = 0;
         while (i++ < pathLength && localDistance < distance) {
             addPathParticles(localDistance / distance, client.player.getBlockPos(), trueNearest);
-            localDistance += 0.33f;
+            localDistance += cfg.pathParticleStep;
         }
 
         //Nearest point to next node
@@ -157,7 +158,7 @@ public class PathManager {
         distance = RuleHolder.getDistance(trueNearest, nearest.next.pos);
         while (i++ < pathLength && localDistance < distance) {
             addPathParticles(localDistance / distance, trueNearest, nearest.next.pos);
-            localDistance += 0.33f;
+            localDistance += cfg.pathParticleStep;
         }
 
         //Node to node, skipping teleportation segments
@@ -184,7 +185,7 @@ public class PathManager {
                 localDistance = 0;
             }
             addPathParticles(localDistance / distance, current.pos, current.next.pos);
-            localDistance += 0.33f;
+            localDistance += cfg.pathParticleStep;
         }
     }
 

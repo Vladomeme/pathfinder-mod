@@ -14,6 +14,8 @@ import java.nio.file.Path;
 import java.util.zip.Deflater;
 import java.util.zip.Inflater;
 
+import static net.pathfinder.main.config.PFConfig.cfg;
+
 /**
  * A class containing all stable waypoint graph information for a given dimension.
  */
@@ -80,7 +82,8 @@ public class DimensionData {
 
             try {
                 Files.write(path, outputStream.toByteArray());
-                Files.writeString(Path.of(path + ".uncompressed"), new Gson().toJson(this));
+                if (cfg.saveUncompressedData)
+                    Files.writeString(Path.of(path + ".uncompressed"), new Gson().toJson(this));
             }
             catch (IOException e) {
                 throw new RuntimeException(e);

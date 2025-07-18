@@ -9,6 +9,8 @@ import net.pathfinder.main.graph.waypoint.data.Waypoint;
 
 import java.util.*;
 
+import static net.pathfinder.main.config.PFConfig.cfg;
+
 /**
  * A class responsible for calculating the path using the navigation graph.
  */
@@ -23,10 +25,10 @@ public class PathBuilder {
             return null;
         }
 
-        Waypoint startWaypoint = WaypointIO.getData().getNearest(start, 200);
-        Waypoint endWaypoint = WaypointIO.getData().getNearest(end, 200);
+        Waypoint startWaypoint = WaypointIO.getData().getNearest(start, cfg.maxOffGraphDistance);
+        Waypoint endWaypoint = WaypointIO.getData().getNearest(end, cfg.maxOffGraphDistance);
         if (startWaypoint == null || endWaypoint == null) {
-            Output.chat("Returned path is null. The player or the destination is too far from the graph.");
+            Output.chat("Couldn't find a path: the player or the destination is too far from the graph.");
             return null;
         }
 

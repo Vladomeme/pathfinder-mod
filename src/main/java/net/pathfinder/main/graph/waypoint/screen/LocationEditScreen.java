@@ -13,12 +13,13 @@ import net.minecraft.text.Style;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
 import net.pathfinder.main.Output;
-import net.pathfinder.main.config.PFConfig;
 import net.pathfinder.main.graph.waypoint.GraphEditor;
 import net.pathfinder.main.graph.waypoint.WaypointGraphRenderer;
 import net.pathfinder.main.graph.waypoint.data.LocationData;
 
 import java.util.Arrays;
+
+import static net.pathfinder.main.config.PFConfig.cfg;
 
 /**
  * A screen for viewing and editing Waypoint location data.
@@ -103,17 +104,17 @@ public class LocationEditScreen extends Screen {
 
         matrices.push();
         matrices.translate(0, 0, 1);
-        context.fill(centerX - 132, centerY - 86, centerX + 132, centerY + 15, 0, PFConfig.INSTANCE.backgroundColor);
-        context.drawBorder(centerX - 133, centerY - 87, 266, 102, PFConfig.INSTANCE.borderColor);
+        context.fill(centerX - 132, centerY - 86, centerX + 132, centerY + 15, 0, cfg.backgroundColour);
+        context.drawBorder(centerX - 133, centerY - 87, 266, 102, cfg.borderColour);
         context.drawCenteredTextWithShadow(tr, "Editing location info...",
-                centerX, centerY - 79, PFConfig.INSTANCE.textColor);
+                centerX, centerY - 79, cfg.textColour);
 
         context.drawText(tr, Text.of("Teleport"), centerX - 85 - tr.getWidth("Teleport"), centerY - 50,
-                PFConfig.INSTANCE.textColor, false);
+                cfg.textColour, false);
         context.drawText(tr, Text.of("Name"), centerX - 85 - tr.getWidth("Name"), centerY - 34,
-                PFConfig.INSTANCE.textColor, false);
+                cfg.textColour, false);
         context.drawText(tr, Text.of("Area"), centerX - 85 - tr.getWidth("Area"), centerY - 18,
-                PFConfig.INSTANCE.textColor, false);
+                cfg.textColour, false);
 
         for (Element element : children())
             ((Drawable) element).render(context, mouseX, mouseY, delta);

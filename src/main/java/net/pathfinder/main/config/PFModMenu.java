@@ -15,7 +15,7 @@ public class PFModMenu implements ModMenuApi {
     @Override
     public ConfigScreenFactory<?> getModConfigScreenFactory() {
         if (FabricLoader.getInstance().isModLoaded("yet_another_config_lib_v3")) {
-            return PFConfig.INSTANCE::create;
+            return PFConfig.cfg::create;
         }
         return parent -> new NoticeScreen(() -> MinecraftClient.getInstance().setScreen(parent),
                 Text.of("Pathfinder"), Text.of("Mod requires YACL to be able to show the config."));

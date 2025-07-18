@@ -6,11 +6,12 @@ import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.text.MutableText;
 import net.minecraft.text.Text;
-import net.pathfinder.main.config.PFConfig;
+
+import static net.pathfinder.main.config.PFConfig.cfg;
 
 public class TextButtonWidget extends ButtonWidget {
 
-    final TextRenderer tr = MinecraftClient.getInstance().textRenderer;
+    private static final TextRenderer tr = MinecraftClient.getInstance().textRenderer;
 
     Type type;
     int x;
@@ -44,9 +45,9 @@ public class TextButtonWidget extends ButtonWidget {
     }
 
     private int getColor(int mouseX, int mouseY) {
-        return isMouseOver(mouseX, mouseY) ? PFConfig.INSTANCE.buttonActiveColor : type.equals(Type.Normal) ?
-                PFConfig.INSTANCE.buttonInactiveColor : type.equals(Type.Positive) ?
-                PFConfig.INSTANCE.buttonPositiveColor : PFConfig.INSTANCE.buttonNegativeColor;
+        return isMouseOver(mouseX, mouseY) ? cfg.buttonActiveColour : type.equals(Type.Normal) ?
+                cfg.buttonInactiveColour : type.equals(Type.Positive) ?
+                cfg.buttonPositiveColour : cfg.buttonNegativeColour;
     }
 
     public void setText(String text) {
