@@ -3,13 +3,11 @@
   "id": "pathfinder_mod",
   "version": "${version}",
 
-  "name": "PF",
-  "description": "",
+  "name": "Pathfinder",
+  "description": "A library for Waypoint Graph-based navigation.",
   "authors": [
     "Vladomeme"
   ],
-  "contact": {
-  },
 
   "license": "MIT",
   "icon": "assets/pathfinder/icon.png",

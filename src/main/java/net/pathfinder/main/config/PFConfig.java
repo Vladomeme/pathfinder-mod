@@ -68,7 +68,7 @@ public class PFConfig {
     public int startColourRaw = -1;
     public int selectedColourRaw = -16711936;
     public int selectedTargetColourRaw = -16744320;
-    public int teleportColourRaw = -8388480;
+    public int teleportColourRaw = -65281;
 
     public transient float[] lineColour4f = getComponents(lineColourRaw);
     public transient float[] newLineColour4f = getComponents(newLineColourRaw);
@@ -182,12 +182,12 @@ public class PFConfig {
 
                                 .option(Option.<Boolean>createBuilder()
                                         .name(Text.literal("Use A* path smoothing"))
-                                        .binding(false, () -> useAstarSmoothing, newVal -> useAstarSmoothing = newVal)
+                                        .binding(true, () -> useAstarSmoothing, newVal -> useAstarSmoothing = newVal)
                                         .controller(TickBoxControllerBuilder::create).build())
 
                                 .option(Option.<Boolean>createBuilder()
                                         .name(Text.literal("Use A* path optimizing"))
-                                        .binding(false, () -> useAstarOptimizing, newVal -> useAstarOptimizing = newVal)
+                                        .binding(true, () -> useAstarOptimizing, newVal -> useAstarOptimizing = newVal)
                                         .controller(TickBoxControllerBuilder::create).build())
 
                                 .option(Option.<Boolean>createBuilder()
@@ -211,7 +211,7 @@ public class PFConfig {
 
                                 .option(Option.<Integer>createBuilder()
                                         .name(Text.literal("Graph gap search starting range"))
-                                        .binding(50, () -> gapSearchStartingRange, newVal -> gapSearchStartingRange = newVal)
+                                        .binding(20, () -> gapSearchStartingRange, newVal -> gapSearchStartingRange = newVal)
                                         .controller(IntegerFieldControllerBuilder::create).build())
 
                                 .option(Option.<Integer>createBuilder()
@@ -221,7 +221,7 @@ public class PFConfig {
 
                                 .option(Option.<Integer>createBuilder()
                                         .name(Text.literal("Max target distance"))
-                                        .binding(50, () -> targetMaxDistance, newVal -> targetMaxDistance = newVal)
+                                        .binding(30, () -> targetMaxDistance, newVal -> targetMaxDistance = newVal)
                                         .controller(IntegerFieldControllerBuilder::create).build())
 
                                 .option(Option.<Integer>createBuilder()
@@ -338,7 +338,7 @@ public class PFConfig {
 
                                 .option(Option.<Color>createBuilder()
                                         .name(Text.literal("Teleport marker"))
-                                        .binding(new Color(-8388480, true),
+                                        .binding(new Color(-65281, true),
                                                 () -> new Color(teleportColourRaw, true), newVal -> teleportColourRaw = newVal.getRGB())
                                         .controller(opt -> ColorControllerBuilder.create(opt).allowAlpha(true)).build())
 

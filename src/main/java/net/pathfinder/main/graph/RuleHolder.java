@@ -134,6 +134,10 @@ public class RuleHolder {
         return x2 >  x1 - range && x2 < x1 + range && y2 > y1 - range && y2 < y1 + range && z2 > z1 - range && z2 < z1 + range;
     }
 
+    public static boolean isInRange(BlockPos p1, Vec3d p2) {
+        return isInRange(p1.getX(), p1.getY(), p1.getZ(), (int) p2.x, (int) p2.y, (int) p2.z, cfg.renderRange);
+    }
+
     public static boolean isInRange(BlockPos p1, Vec3d p2, int range) {
         return isInRange(p1.getX(), p1.getY(), p1.getZ(), (int) p2.x, (int) p2.y, (int) p2.z, range);
     }
