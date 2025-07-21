@@ -34,13 +34,13 @@ public class RuleHolder {
 
     public static boolean isStandable(ClientWorld world, BlockPos pos, int xVec, int yVec, int zVec) {
         BlockState state = world.getBlockState(pos.mutableCopy().add(xVec, yVec, zVec));
-        return (state.getBlock().collidable && !isIn(CARPETS, state))
+        return (state.getBlock().collidable && !isIn(CARPETS, state) && !state.getBlock().equals(Blocks.LIGHT))
                 || state.isIn(BlockTags.CLIMBABLE) || state.getBlock().equals(Blocks.WATER);
     }
 
     public static boolean isStandable(ClientWorld world, BlockPos pos) {
         BlockState state = world.getBlockState(pos);
-        return (state.getBlock().collidable && !isIn(CARPETS, state))
+        return (state.getBlock().collidable && !isIn(CARPETS, state) && !state.getBlock().equals(Blocks.LIGHT))
                 || state.isIn(BlockTags.CLIMBABLE) || state.getBlock().equals(Blocks.WATER);
     }
 
