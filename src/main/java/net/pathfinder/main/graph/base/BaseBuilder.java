@@ -19,7 +19,6 @@ public class BaseBuilder {
 
     public static final BaseBuilder INSTANCE = new BaseBuilder();
 
-    int nodeCount = 1;
     final Set<BaseLink> links = new HashSet<>();
     final Stack<BlockPos> open = new Stack<>();
     final Map<BlockPos, Boolean> closed = new HashMap<>();
@@ -28,8 +27,8 @@ public class BaseBuilder {
     public int compute(CommandContext<FabricClientCommandSource> context) {
         ClientPlayerEntity player = context.getSource().getPlayer();
         BlockPos start = player.getBlockPos();
-        RuleHolder.start = start;
-        RuleHolder.start3d = Vec3d.of(start);
+        DebugManager.start = start;
+        DebugManager.start3d = Vec3d.of(start);
 
         open.add(start);
 
@@ -38,18 +37,16 @@ public class BaseBuilder {
             closed.put(current, true);
             List<BlockPos> newNodes = CandidateSupplier.getCandidates(player.clientWorld, current)
                     .stream().map(CandidateNode::pos).filter(pos -> !closed.containsKey(pos)).toList();
-            nodeCount += newNodes.size();
             open.addAll(newNodes);
             newNodes.forEach(pos -> links.add(new BaseLink(current, pos)));
-            if (nodeCount >= cfg.baseGraphMaxNodes) break;
+            if (closed.size() >= cfg.baseGraphMaxNodes) break;
         }
-        Output.chat("Found " + nodeCount + " nodes with " + links.size() + " links.");
-        GraphRenderer.lines.addAll(links.stream().map(link -> new Pair<>(link.left.toCenterPos(), link.right.toCenterPos())).toList());
+        Output.chat("Found " + closed.size() + " nodes with " + links.size() + " links.");
+        DebugManager.lines.addAll(links.stream().map(link -> new Pair<>(link.left.toCenterPos(), link.right.toCenterPos())).toList());
 
         links.clear();
         closed.clear();
         open.clear();
-        nodeCount = 1;
         return 1;
     }
 }

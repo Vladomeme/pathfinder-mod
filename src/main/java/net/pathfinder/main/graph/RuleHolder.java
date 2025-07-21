@@ -22,12 +22,6 @@ import static net.pathfinder.main.config.PFConfig.cfg;
  */
 public class RuleHolder {
 
-    //todo move fields out of here
-    public static BlockPos start;
-    public static Vec3d start3d;
-    public static BlockPos target;
-    public static Vec3d target3d;
-
     public static boolean isPassable(ClientWorld world, BlockPos pos, int xVec, int yVec, int zVec) {
         BlockState state = world.getBlockState(pos.mutableCopy().add(xVec, yVec, zVec));
         return !state.getBlock().collidable || isIn(PASSABLE, state);
@@ -55,16 +49,6 @@ public class RuleHolder {
         return !state.isIn(BlockTags.FENCES) && !state.isIn(BlockTags.WALLS);
     }
 
-    public static boolean notFence(ClientWorld world, BlockPos pos) {
-        BlockState state = world.getBlockState(pos);
-        return !state.isIn(BlockTags.FENCES) && !state.isIn(BlockTags.WALLS);
-    }
-
-    public static boolean isSafe(ClientWorld world, BlockPos pos, int xVec, int yVec, int zVec) {
-        BlockState state = world.getBlockState(pos.mutableCopy().add(xVec, yVec, zVec));
-        return !isIn(DANGEROUS, state);
-    }
-
     public static boolean isSafe(ClientWorld world, BlockPos pos) {
         return !isIn(DANGEROUS, world.getBlockState(pos));
     }
@@ -73,56 +57,9 @@ public class RuleHolder {
         return world.getBlockState(pos.mutableCopy().add(xVec, yVec, zVec)).getBlock().collidable;
     }
 
-    public static boolean isSolid(ClientWorld world, BlockPos pos) {
-        return world.getBlockState(pos).getBlock().collidable;
-    }
-
-    public static boolean notSolid(ClientWorld world, BlockPos pos, int xVec, int yVec, int zVec) {
-        return !world.getBlockState(pos.mutableCopy().add(xVec, yVec, zVec)).getBlock().collidable;
-    }
-
-    public static boolean notSolid(ClientWorld world, BlockPos pos) {
-        return !world.getBlockState(pos).getBlock().collidable;
-    }
-
-    public static boolean isClimbable(ClientWorld world, BlockPos pos, int xVec, int yVec, int zVec) {
-        BlockState state = world.getBlockState(pos.mutableCopy().add(xVec, yVec, zVec));
-        return state.isIn(BlockTags.CLIMBABLE) || state.getBlock().equals(Blocks.WATER);
-    }
-
     public static boolean isClimbable(ClientWorld world, BlockPos pos) {
         BlockState state = world.getBlockState(pos);
         return state.isIn(BlockTags.CLIMBABLE) || state.getBlock().equals(Blocks.WATER);
-    }
-
-    public static boolean isSolidOrClimbable(ClientWorld world, BlockPos pos, int xVec, int yVec, int zVec) {
-        BlockState state = world.getBlockState(pos.mutableCopy().add(xVec, yVec, zVec));
-        return state.getBlock().collidable || state.isIn(BlockTags.CLIMBABLE) || state.getBlock().equals(Blocks.WATER);
-    }
-
-    public static boolean isSolidOrClimbable(ClientWorld world, BlockPos pos) {
-        BlockState state = world.getBlockState(pos);
-        return state.getBlock().collidable || state.isIn(BlockTags.CLIMBABLE) || state.getBlock().equals(Blocks.WATER);
-    }
-
-    public static boolean notSolidAndClimbable(ClientWorld world, BlockPos pos, int xVec, int yVec, int zVec) {
-        BlockState state = world.getBlockState(pos.mutableCopy().add(xVec, yVec, zVec));
-        return !state.getBlock().collidable && (state.isIn(BlockTags.CLIMBABLE) || state.getBlock().equals(Blocks.WATER));
-    }
-
-    public static boolean notSolidAndClimbable(ClientWorld world, BlockPos pos) {
-        BlockState state = world.getBlockState(pos);
-        return !state.getBlock().collidable && (state.isIn(BlockTags.CLIMBABLE) || state.getBlock().equals(Blocks.WATER));
-    }
-
-    public static boolean notSolidOrClimbable(ClientWorld world, BlockPos pos, int xVec, int yVec, int zVec) {
-        BlockState state = world.getBlockState(pos.mutableCopy().add(xVec, yVec, zVec));
-        return !state.getBlock().collidable || state.isIn(BlockTags.CLIMBABLE) || state.getBlock().equals(Blocks.WATER);
-    }
-
-    public static boolean notSolidOrClimbable(ClientWorld world, BlockPos pos) {
-        BlockState state = world.getBlockState(pos);
-        return !state.getBlock().collidable || state.isIn(BlockTags.CLIMBABLE) || state.getBlock().equals(Blocks.WATER);
     }
 
     public static boolean isValidPosition(ClientWorld world, BlockPos pos) {
@@ -138,6 +75,7 @@ public class RuleHolder {
             Waypoint origin = GraphEditor.selected;
             return cfg.maxPathDistanceSquared < getSquaredDistance(origin.x(), origin.y(), origin.z(), pos.getX(), pos.getY(), pos.getZ());
         }
+        BlockPos start = DebugManager.start;
         return cfg.maxPathDistanceSquared < getSquaredDistance(start.getX(), start.getY(), start.getZ(), pos.getX(), pos.getY(), pos.getZ());
     }
 
@@ -206,12 +144,5 @@ public class RuleHolder {
 
     public static boolean isInRange(Waypoint p1, Waypoint p2, int range) {
         return isInRange(p1.x(), p1.y(), p1.z(), p2.x(), p2.y(), p2.z(), range);
-    }
-
-    public static void clear() {
-        start = null;
-        start3d = null;
-        target = null;
-        target3d = null;
     }
 }

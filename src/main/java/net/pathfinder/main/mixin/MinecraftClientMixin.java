@@ -5,10 +5,8 @@ import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.hit.HitResult;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Vec3d;
 import net.pathfinder.main.PathfinderMod;
-import net.pathfinder.main.graph.RuleHolder;
-import net.pathfinder.main.graph.astar.AstarBuilder;
+import net.pathfinder.main.graph.DebugManager;
 import net.pathfinder.main.graph.waypoint.GraphEditor;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -21,7 +19,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import static net.pathfinder.main.config.PFConfig.cfg;
 
 /**
- * Mixin used for getting left & right click inputs.=
+ * Mixin used for getting left & right click inputs.
  */
 @Mixin(MinecraftClient.class)
 public abstract class MinecraftClientMixin {
@@ -38,12 +36,8 @@ public abstract class MinecraftClientMixin {
 		else if (PathfinderMod.activationKey.isPressed()) {
 			BlockHitResult hitResult = (BlockHitResult) player.raycast(cfg.maxPathDistance, 0, false);
 
-			if (hitResult.getType().equals(HitResult.Type.BLOCK)) {
-                RuleHolder.start = getPosition(hitResult);
-				RuleHolder.start3d = Vec3d.of(RuleHolder.start);
-
-				if (RuleHolder.target != null) AstarBuilder.findOnUpdate();
-			}
+			if (hitResult.getType().equals(HitResult.Type.BLOCK))
+				DebugManager.updateStart(getPosition(hitResult));
 			cir.setReturnValue(false);
 		}
 	}
@@ -56,12 +50,7 @@ public abstract class MinecraftClientMixin {
 			if (hitResult.getType().equals(HitResult.Type.BLOCK)) {
 				BlockPos pos = getPosition(hitResult);
 				if (GraphEditor.active) GraphEditor.onRightClick(pos);
-				else {
-					RuleHolder.target = getPosition(hitResult);
-					RuleHolder.target3d = Vec3d.of(RuleHolder.target);
-
-					if (RuleHolder.start != null) AstarBuilder.findOnUpdate();
-				}
+				else DebugManager.updateTarget(pos);
 			}
 			ci.cancel();
         }

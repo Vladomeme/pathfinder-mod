@@ -65,8 +65,8 @@ public class LocationData {
     }
 
     public void replaceWithID(long id) {
-        GraphEditor.getLocationsState().remove(this.id());
-        GraphEditor.getLocationsState().put(id, new LocationData(id, this.isTeleport, this.name, Arrays.copyOf(this.area, this.area.length)));
+        GraphEditor.locationsState.remove(this.id());
+        GraphEditor.locationsState.put(id, new LocationData(id, this.isTeleport, this.name, Arrays.copyOf(this.area, this.area.length)));
     }
 
     public boolean matchesDefault() {

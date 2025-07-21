@@ -13,8 +13,8 @@ import net.minecraft.text.Style;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
 import net.pathfinder.main.Output;
+import net.pathfinder.main.graph.render.GraphRenderer;
 import net.pathfinder.main.graph.waypoint.GraphEditor;
-import net.pathfinder.main.graph.waypoint.WaypointGraphRenderer;
 import net.pathfinder.main.graph.waypoint.data.LocationData;
 
 import java.util.Arrays;
@@ -44,7 +44,7 @@ public class LocationEditScreen extends Screen {
         super(Text.of(""));
 
         this.id = id;
-        this.info = GraphEditor.getLocationsState().get(id);
+        this.info = GraphEditor.locationsState.get(id);
         this.centerX = client.getWindow().getScaledWidth() / 2;
         this.centerY = client.getWindow().getScaledHeight() / 2;
     }
@@ -162,15 +162,15 @@ public class LocationEditScreen extends Screen {
             if (this.info == null)
                 Output.chat("Ignoring location info because all fields contain default values.", Output.Color.RED);
             else {
-                GraphEditor.getLocationsState().remove(id);
+                GraphEditor.locationsState.remove(id);
                 Output.chat("Removed location info because all fields now contain default values.");
-                WaypointGraphRenderer.updateRender();
+                GraphRenderer.updateElements();
             }
         }
         else {
-            if (this.info == null) GraphEditor.getLocationsState().put(id, info);
+            if (this.info == null) GraphEditor.locationsState.put(id, info);
             Output.chat("Updated location info for waypoint " + id + ".");
-            WaypointGraphRenderer.updateRender();
+            GraphRenderer.updateElements();
         }
         close();
     }

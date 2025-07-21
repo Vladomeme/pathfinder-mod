@@ -37,7 +37,7 @@ public class PFConfig {
     public boolean useAstarSmoothing = true;
     public boolean useAstarOptimizing = true;
     public boolean saveUncompressedData = false;
-    public int baseGraphMaxNodes = 20000;
+    public int baseGraphMaxNodes = 10000;
     //Ranges
     public int maxPathDistance = 80;
     public int gapSearchStartingRange = 20;
@@ -70,16 +70,16 @@ public class PFConfig {
     public int selectedTargetColourRaw = -16744320;
     public int teleportColourRaw = -8388480;
 
-    public transient Color lineColour = toColor(lineColourRaw);
-    public transient Color newLineColour = toColor(newLineColourRaw);
-    public transient Color startColour = toColor(startColourRaw);
-    public transient Color startFillColour = toFillColor(startColourRaw);
-    public transient Color selectedColour = toColor(selectedColourRaw);
-    public transient Color selectedFillColour = toFillColor(selectedColourRaw);
-    public transient Color selectedTargetColour = toColor(selectedTargetColourRaw);
-    public transient Color selectedTargetFillColour = toFillColor(selectedTargetColourRaw);
-    public transient Color teleportColour = toColor(teleportColourRaw);
-    public transient Color teleportFillColour = toFillColor(teleportColourRaw);
+    public transient float[] lineColour4f = getComponents(lineColourRaw);
+    public transient float[] newLineColour4f = getComponents(newLineColourRaw);
+    public transient float[] startColour4f = getComponents(startColourRaw);
+    public transient float[] startFillColour4f = getComponents(withAlpha(startColourRaw));
+    public transient float[] selectedColour4f = getComponents(selectedColourRaw);
+    public transient float[] selectedFillColour4f = getComponents(withAlpha(selectedColourRaw));
+    public transient float[] selectedTargetColour4f = getComponents(selectedTargetColourRaw);
+    public transient float[] selectedTargetFillColour4f = getComponents(withAlpha(selectedTargetColourRaw));
+    public transient float[] teleportColour4f = getComponents(teleportColourRaw);
+    public transient float[] teleportFillColour4f = getComponents(withAlpha(teleportColourRaw));
     //Screen colours
     public int buttonInactiveColour = -2236963;
     public int buttonNegativeColour = -1823700;
@@ -111,24 +111,20 @@ public class PFConfig {
 
         targetMaxAngleRad = Math.toRadians(targetMaxAngle);
 
-        lineColour = toColor(lineColourRaw);
-        newLineColour = toColor(newLineColourRaw);
-        startColour = toColor(startColourRaw);
-        startFillColour = toFillColor(startColourRaw);
-        selectedColour = toColor(selectedColourRaw);
-        selectedFillColour = toFillColor(selectedColourRaw);
-        selectedTargetColour = toColor(selectedTargetColourRaw);
-        selectedTargetFillColour = toFillColor(selectedTargetColourRaw);
-        teleportColour = toColor(teleportColourRaw);
-        teleportFillColour = toFillColor(teleportColourRaw);
+        lineColour4f = getComponents(lineColourRaw);
+        newLineColour4f = getComponents(newLineColourRaw);
+        startColour4f = getComponents(startColourRaw);
+        startFillColour4f = getComponents(withAlpha(startColourRaw));
+        selectedColour4f = getComponents(selectedColourRaw);
+        selectedFillColour4f = getComponents(withAlpha(selectedColourRaw));
+        selectedTargetColour4f = getComponents(selectedTargetColourRaw);
+        selectedTargetFillColour4f = getComponents(withAlpha(selectedTargetColourRaw));
+        teleportColour4f = getComponents(teleportColourRaw);
+        teleportFillColour4f = getComponents(withAlpha(teleportColourRaw));
     }
 
-    private Color toColor(int colour) {
-        return new Color(colour, true);
-    }
-
-    private Color toFillColor(int colour) {
-        return new Color((colour & 0xffffff) | (50 << 24), true);
+    private int withAlpha(int colour) {
+        return (colour & 0xffffff) | (50 << 24);
     }
 
     private float[] getComponents(int colour) {
@@ -201,7 +197,7 @@ public class PFConfig {
 
                                 .option(Option.<Integer>createBuilder()
                                         .name(Text.literal("Max base graph node count"))
-                                        .binding(20000, () -> baseGraphMaxNodes, newVal -> baseGraphMaxNodes = newVal)
+                                        .binding(10000, () -> baseGraphMaxNodes, newVal -> baseGraphMaxNodes = newVal)
                                         .controller(IntegerFieldControllerBuilder::create).build())
                                 .build())
 

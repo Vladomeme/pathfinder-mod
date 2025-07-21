@@ -8,6 +8,7 @@ import net.pathfinder.main.Output;
 import net.pathfinder.main.PathfinderMod;
 import net.pathfinder.main.graph.RuleHolder;
 import net.pathfinder.main.graph.astar.AstarBuilder;
+import net.pathfinder.main.graph.render.GraphRenderer;
 import net.pathfinder.main.graph.waypoint.data.LocationData;
 import net.pathfinder.main.graph.waypoint.data.Waypoint;
 import net.pathfinder.main.graph.waypoint.screen.LocationEditScreen;
@@ -28,11 +29,11 @@ public class GraphEditor {
     public static boolean active = false;
     private static int clickCooldown = 0;
     static boolean hasChanges = false;
-    static EditMode mode = NORMAL;
+    public static EditMode mode = NORMAL;
 
-    static LongObjectHashMap<Waypoint> waypointsState;
-    static LongObjectHashMap<LocationData> locationsState;
-    static LongObjectHashMap<Waypoint> currentSelection;
+    public static LongObjectHashMap<Waypoint> waypointsState;
+    public static LongObjectHashMap<LocationData> locationsState;
+    public static LongObjectHashMap<Waypoint> currentSelection;
 
     public static Waypoint selected;
 
@@ -66,11 +67,7 @@ public class GraphEditor {
             if (!waypointsState.isEmpty() || !currentSelection.isEmpty()) {
                 Waypoint nearest = getNearest(newPos);
                 if (nearest == null) Output.chat("Couldn't find a valid nearby waypoint", Output.Color.RED);
-                else {
-                    RuleHolder.start = newPos;
-                    connectNearest(nearest, newPos); //Append to nearest
-                    RuleHolder.start = null;
-                }
+                else connectNearest(nearest, newPos); //Append to nearest
             }
         }
         else {
@@ -134,7 +131,7 @@ public class GraphEditor {
         last.addNeighbour(waypoint2.id());
         waypoint2.addNeighbour(last.id());
         hasChanges = true;
-        WaypointGraphRenderer.updateRender();
+        GraphRenderer.updateElements();
 
         Output.chat("Path created: " + waypoint1.id() + " - " + waypoint2.id() + ".");
     }
@@ -144,19 +141,19 @@ public class GraphEditor {
      */
     private static void connectNearest(Waypoint waypoint, BlockPos pos) {
         Waypoint original = waypoint;
-        List<BlockPos> path = AstarBuilder.findAndReturn(waypoint.pos(), pos);
+        List<BlockPos> path = AstarBuilder.findAndReturn(pos, waypoint.pos());
 
         int minDistance = RuleHolder.getSquaredDistance(waypoint, pos);
         for (BlockPos node : path) {
             Waypoint nearest = getNearest(node);
             int distance = RuleHolder.getSquaredDistance(nearest, node);
 
-            if (distance < minDistance && nearest != waypoint) {
+            if (distance < minDistance) {
                 minDistance = distance;
                 waypoint = nearest;
             }
         }
-        if (waypoint != original) path = AstarBuilder.findAndReturn(waypoint.pos(), pos);
+        if (waypoint != original) path = AstarBuilder.findAndReturn(pos, waypoint.pos());
 
         Waypoint last = waypoint;
         if (path.size() > 1) {
@@ -173,7 +170,7 @@ public class GraphEditor {
         end.addNeighbour(last.id());
         currentSelection.put(end.id(), end);
         hasChanges = true;
-        WaypointGraphRenderer.updateRender();
+        GraphRenderer.updateElements();
 
         Output.chat("Connected to nearest point: " + waypoint.coordinates());
     }
@@ -185,7 +182,7 @@ public class GraphEditor {
         waypoint1.addNeighbour(waypoint2.id());
         waypoint2.addNeighbour(waypoint1.id());
         hasChanges = true;
-        WaypointGraphRenderer.updateRender();
+        GraphRenderer.updateElements();
 
         Output.chat("Straight path created: " + waypoint1.id() + " - " + waypoint2.id() + ".");
     }
@@ -197,7 +194,7 @@ public class GraphEditor {
         waypoint1.removeNeighbour(waypoint2.id());
         waypoint2.removeNeighbour(waypoint1.id());
         hasChanges = true;
-        WaypointGraphRenderer.updateRender();
+        GraphRenderer.updateElements();
 
         Output.chat("Path removed: " + waypoint1.id() + " - " + waypoint2.id() + ".");
     }
@@ -230,7 +227,7 @@ public class GraphEditor {
         hasChanges = true;
         selected = null;
         TargetHolder.targeted = null;
-        WaypointGraphRenderer.updateRender();
+        GraphRenderer.updateElements();
 
         Output.chat("Waypoint " + waypoint.coordinates() + " removed.");
     }
@@ -264,7 +261,7 @@ public class GraphEditor {
         waypointsState.putAll(currentSelection);
         currentSelection.clear();
         hasChanges = false;
-        WaypointGraphRenderer.updateRender();
+        GraphRenderer.updateElements();
 
         Output.chat("Selection appended. Don't forget to save it.");
     }
@@ -303,7 +300,7 @@ public class GraphEditor {
         WaypointIO.data.locations = new LongObjectHashMap<>();
         locationsState.forEach((key, value) -> WaypointIO.data.locations.put(key, value.copy()));
         WaypointIO.data.write();
-        WaypointGraphRenderer.updateRender();
+        GraphRenderer.updateElements();
         hasChanges = false;
 
         Output.chat("Changes saved.");
@@ -464,7 +461,7 @@ public class GraphEditor {
         WaypointIO.data.waypoints.forEach((key, value) -> waypointsState.put(key, value.copy()));
         locationsState = new LongObjectHashMap<>();
         WaypointIO.data.locations.forEach((key, value) -> locationsState.put(key, value.copy()));
-        WaypointGraphRenderer.updateRender();
+        GraphRenderer.updateElements();
 
         Output.chat("Discarded all unsaved changes.");
         return 1;
@@ -483,7 +480,7 @@ public class GraphEditor {
             locationsState = new LongObjectHashMap<>();
             WaypointIO.data.locations.forEach((key, value) -> locationsState.put(key, value.copy()));
             currentSelection = new LongObjectHashMap<>();
-            WaypointGraphRenderer.updateRender();
+            GraphRenderer.updateElements();
             active = true;
         }
         else {
@@ -503,18 +500,6 @@ public class GraphEditor {
         Output.actionBar("Using " + mode.name + " mode.", Output.Color.GOLD);
     }
 
-    public static LongObjectHashMap<Waypoint> getWaypointsState() {
-        return waypointsState;
-    }
-
-    public static LongObjectHashMap<LocationData> getLocationsState() {
-        return locationsState;
-    }
-
-    public static LongObjectHashMap<Waypoint> getCurrentSelection() {
-        return currentSelection;
-    }
-
     public static void clear() {
         active = false;
         hasChanges = false;
@@ -523,6 +508,6 @@ public class GraphEditor {
         locationsState = null;
         currentSelection = null;
         selected = null;
-        WaypointGraphRenderer.clear();
+        GraphRenderer.clear();
     }
 }

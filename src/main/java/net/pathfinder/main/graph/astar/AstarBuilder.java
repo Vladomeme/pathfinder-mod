@@ -11,7 +11,7 @@ import net.minecraft.util.math.BlockPos;
 import net.pathfinder.main.Output;
 import net.pathfinder.main.PathfinderMod;
 import net.pathfinder.main.graph.CandidateSupplier;
-import net.pathfinder.main.graph.GraphRenderer;
+import net.pathfinder.main.graph.DebugManager;
 import net.pathfinder.main.graph.RuleHolder;
 import net.pathfinder.main.graph.waypoint.GraphEditor;
 
@@ -36,17 +36,12 @@ public class AstarBuilder {
         inProcess = true;
 
         PathfinderMod.executor.submit(() -> {
-            GraphRenderer.lines.clear();
-            ClientPlayerEntity player = MinecraftClient.getInstance().player;
-            if (player == null) {
-                inProcess = false;
-                return;
-            }
-            ClientWorld world = player.clientWorld;
+            DebugManager.lines.clear();
 
-            Optional<List<BlockPos>> path = runAstar(world, RuleHolder.start, RuleHolder.target);
+            ClientPlayerEntity player = Objects.requireNonNull(MinecraftClient.getInstance().player);
+            Optional<List<BlockPos>> path = runAstar(player.clientWorld, DebugManager.start, DebugManager.target);
 
-            if (path.isPresent()) processResults(world, path.get());
+            if (path.isPresent()) processResults(player.clientWorld, path.get());
             else Output.chat("Path couldn't be found.");
 
             inProcess = false;
@@ -60,29 +55,28 @@ public class AstarBuilder {
         if (inProcess) return List.of();
         inProcess = true;
 
-        ClientPlayerEntity player = MinecraftClient.getInstance().player;
-        if (player == null) {
-            inProcess = false;
-            return List.of();
-        }
-        ClientWorld world = player.clientWorld;
+        ClientPlayerEntity player = Objects.requireNonNull(MinecraftClient.getInstance().player);
 
         Future<List<BlockPos>> future = PathfinderMod.executor.submit(() -> {
-            Optional<List<BlockPos>> path = runAstar(world, start, end);
+            DebugManager.start = start;
+            Optional<List<BlockPos>> path = runAstar(player.clientWorld, start, end);
+            DebugManager.start = null;
 
-            if (path.isPresent()) return processResults(world, path.get());
+            if (path.isPresent()) return processResults(player.clientWorld, path.get());
             else {
                 Output.chat("Path couldn't be found.");
                 return List.of();
             }
         });
+
         try {
-            List<BlockPos> path = future.get();
-            inProcess = false;
-            return path;
+            return future.get();
         }
         catch (InterruptedException | ExecutionException e) {
             throw new RuntimeException(e);
+        }
+        finally {
+            inProcess = false;
         }
     }
 
@@ -95,21 +89,21 @@ public class AstarBuilder {
         inProcess = true;
 
         PathfinderMod.executor.submit(() -> {
-            GraphRenderer.lines.clear();
+            DebugManager.lines.clear();
 
             ClientPlayerEntity player = context.getSource().getPlayer();
-            ClientWorld world = context.getSource().getWorld();
 
             BlockPos start = player.getBlockPos();
-            RuleHolder.start = start;
             int x = IntegerArgumentType.getInteger(context, "x");
             int y = IntegerArgumentType.getInteger(context, "y");
             int z = IntegerArgumentType.getInteger(context, "z");
             BlockPos target = new BlockPos(x, y, z);
 
-            Optional<List<BlockPos>> path = runAstar(world, start, target);
+            DebugManager.start = start;
+            Optional<List<BlockPos>> path = runAstar(player.clientWorld, start, target);
+            DebugManager.start = null;
 
-            if (path.isPresent()) processResults(world, path.get());
+            if (path.isPresent()) processResults(player.clientWorld, path.get());
             else Output.chat("Path couldn't be found.");
 
             inProcess = false;
@@ -271,6 +265,6 @@ public class AstarBuilder {
 
     private static void setRenderPath(List<BlockPos> path) {
         for (int i = 0; i < path.size() - 1; i++)
-            GraphRenderer.lines.add(new Pair<>(path.get(i).toCenterPos(), path.get(i + 1).toCenterPos()));
+            DebugManager.lines.add(new Pair<>(path.get(i).toCenterPos(), path.get(i + 1).toCenterPos()));
     }
 }

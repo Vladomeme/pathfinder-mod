@@ -9,6 +9,7 @@ import net.minecraft.util.math.Vec3d;
 import net.pathfinder.main.graph.RuleHolder;
 import net.pathfinder.main.graph.waypoint.data.Waypoint;
 
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Stream;
 
@@ -22,8 +23,7 @@ public class TargetHolder {
     public static Waypoint targeted = null;
 
     public static void updateTargeted() {
-        ClientPlayerEntity player = MinecraftClient.getInstance().player;
-        if (player == null) return;
+        ClientPlayerEntity player = Objects.requireNonNull(MinecraftClient.getInstance().player);
 
         BlockPos pos = player.getBlockPos();
         Vec3d eyePos = player.getEyePos();

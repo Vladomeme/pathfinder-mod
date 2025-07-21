@@ -4,6 +4,7 @@
   "package": "net.pathfinder.main.mixin",
   "compatibilityLevel": "JAVA_17",
   "client": [
+    "KeyBindingMixin",
     "MinecraftClientMixin",
     "PlayerListHudAccessor"
   ],

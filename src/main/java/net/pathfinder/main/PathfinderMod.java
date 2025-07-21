@@ -17,18 +17,20 @@ import net.minecraft.client.option.KeyBinding;
 import net.minecraft.client.util.InputUtil;
 import net.minecraft.util.Identifier;
 import net.pathfinder.main.datagen.BlockTagProvider;
-import net.pathfinder.main.graph.RuleHolder;
 import net.pathfinder.main.graph.astar.AstarBuilder;
 import net.pathfinder.main.graph.base.BaseBuilder;
-import net.pathfinder.main.graph.GraphRenderer;
+import net.pathfinder.main.graph.DebugManager;
+import net.pathfinder.main.graph.render.GraphRenderer;
+import net.pathfinder.main.graph.render.HudRenderer;
+import net.pathfinder.main.graph.render.RenderUtils;
 import net.pathfinder.main.graph.waypoint.TargetHolder;
 import net.pathfinder.main.graph.waypoint.GraphEditor;
-import net.pathfinder.main.graph.waypoint.WaypointGraphRenderer;
 import net.pathfinder.main.graph.waypoint.WaypointIO;
 import net.pathfinder.main.graph.waypoint.data.DimensionData;
 import net.pathfinder.main.graph.waypoint.path.PathManager;
 import org.lwjgl.glfw.GLFW;
 
+import java.util.Objects;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -66,8 +68,6 @@ public class PathfinderMod implements ClientModInitializer {
         LiteralArgumentBuilder<FabricClientCommandSource> root = literal("pathfinder")
                 .then(literal("debug")
                         .executes(context -> debug()))
-                .then(literal("toggle_render")
-                        .executes(context -> GraphRenderer.toggleRender()))
                 .then(literal("base")
                         .executes(BaseBuilder.INSTANCE::compute))
                 .then(literal("astar")
@@ -81,7 +81,7 @@ public class PathfinderMod implements ClientModInitializer {
                         .executes(context -> GraphEditor.toggleEditing()))
                 .then(literal("waypoint")
                         .then(literal("toggle_depth_test")
-                                .executes(context -> WaypointGraphRenderer.toggleDepthTest()))
+                                .executes(context -> RenderUtils.toggleDepthTest()))
                         .then(literal("discard")
                                 .executes(context -> GraphEditor.discard()))
                         .then(literal("save")
@@ -101,26 +101,28 @@ public class PathfinderMod implements ClientModInitializer {
     }
 
     private void registerEvents() {
-        WorldRenderEvents.AFTER_TRANSLUCENT.register(context -> {
-            if (GraphEditor.active) WaypointGraphRenderer.render(context.matrixStack());
-            else if (GraphRenderer.enabled) GraphRenderer.render(context.matrixStack());
-        });
-
-        HudLayerRegistrationCallback.EVENT.register(drawer -> drawer.attachLayerBefore(
-                IdentifiedLayer.CHAT, Identifier.of("pathfinder", "display"),
-                (context, tick) ->  WaypointGraphRenderer.renderDisplay(context)));
-
         ClientPlayConnectionEvents.JOIN.register((handler, sender, client) -> WaypointIO.read());
         ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> clear());
 
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
-            if (GraphEditor.active) {
+            if (GraphEditor.active && client.player != null) {
                 GraphEditor.tick();
                 tickKeybinds();
-                WaypointGraphRenderer.updatePosition();
+                GraphRenderer.updatePosition(client.player);
             }
             if (PathManager.isActive()) PathManager.tick();
         });
+
+        WorldRenderEvents.AFTER_ENTITIES.register(context -> {
+            if (GraphEditor.active) GraphRenderer.render(context);
+            else if (DebugManager.shouldRender()) GraphRenderer.renderDebug(Objects.requireNonNull(context.matrixStack()));
+        });
+
+        HudLayerRegistrationCallback.EVENT.register(drawer -> drawer.attachLayerBefore(
+                IdentifiedLayer.CHAT, Identifier.of("pathfinder", "display"),
+                (context, tick) ->  {
+                    if (GraphEditor.active) HudRenderer.renderDisplay(context);
+                }));
     }
 
     @SuppressWarnings("NoTranslation")
@@ -154,8 +156,7 @@ public class PathfinderMod implements ClientModInitializer {
 
     @SuppressWarnings("SameReturnValue")
     private int clear() {
-        GraphRenderer.lines.clear();
-        RuleHolder.clear();
+        DebugManager.clear();
         GraphEditor.clear();
         PathManager.clear();
         return 1;
@@ -173,19 +174,19 @@ public class PathfinderMod implements ClientModInitializer {
         }
         Output.chat("Builder active: " + GraphEditor.active);
         if (GraphEditor.active) {
-            Output.chat("Active waypoints: " + GraphEditor.getWaypointsState().size());
-            Output.chat("Active locations: " + GraphEditor.getLocationsState().size());
-            Output.chat("Selection: " + GraphEditor.getCurrentSelection().size());
+            Output.chat("Active waypoints: " + GraphEditor.waypointsState.size());
+            Output.chat("Active locations: " + GraphEditor.locationsState.size());
+            Output.chat("Selection: " + GraphEditor.currentSelection.size());
         }
-        Output.chat("Renderer locked: " + WaypointGraphRenderer.updateLocked.get());
-        if (WaypointGraphRenderer.lines != null)
-            Output.chat("Lines total: " + WaypointGraphRenderer.lines.size());
-        if (WaypointGraphRenderer.linesActive != null)
-            Output.chat("Lines active: " + WaypointGraphRenderer.linesActive.size());
-        if (WaypointGraphRenderer.teleports != null)
-            Output.chat("Teleports total: " + WaypointGraphRenderer.teleports.size());
-        if (WaypointGraphRenderer.teleportsActive != null)
-            Output.chat("Teleports active: " + WaypointGraphRenderer.teleportsActive.size());
+        Output.chat("Renderer locked: " + GraphRenderer.updateLocked.get());
+        if (GraphRenderer.lines != null)
+            Output.chat("Lines total: " + GraphRenderer.lines.size());
+        if (GraphRenderer.linesActive != null)
+            Output.chat("Lines active: " + GraphRenderer.linesActive.size());
+        if (GraphRenderer.teleports != null)
+            Output.chat("Teleports total: " + GraphRenderer.teleports.size());
+        if (GraphRenderer.teleportsActive != null)
+            Output.chat("Teleports active: " + GraphRenderer.teleportsActive.size());
         return 1;
     }
 }
