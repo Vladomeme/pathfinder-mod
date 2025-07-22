@@ -26,6 +26,7 @@ public class BaseBuilder {
     @SuppressWarnings("SameReturnValue")
     public int compute(CommandContext<FabricClientCommandSource> context) {
         ClientPlayerEntity player = context.getSource().getPlayer();
+        CandidateSupplier supplier = new CandidateSupplier(player.clientWorld);
         BlockPos start = player.getBlockPos();
         DebugManager.start = start;
         DebugManager.start3d = Vec3d.of(start);
@@ -35,7 +36,7 @@ public class BaseBuilder {
         while (!open.isEmpty()) {
             BlockPos current = open.pop();
             closed.put(current, true);
-            List<BlockPos> newNodes = CandidateSupplier.getCandidates(player.clientWorld, current)
+            List<BlockPos> newNodes = supplier.getCandidates(current)
                     .stream().map(CandidateNode::pos).filter(pos -> !closed.containsKey(pos)).toList();
             open.addAll(newNodes);
             newNodes.forEach(pos -> links.add(new BaseLink(current, pos)));

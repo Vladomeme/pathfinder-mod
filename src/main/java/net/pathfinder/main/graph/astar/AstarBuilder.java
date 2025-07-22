@@ -115,6 +115,7 @@ public class AstarBuilder {
      * A* implementation. Returns an Optional with a path, if found, or an empty optional otherwise.
      */
     public static Optional<List<BlockPos>> runAstar(ClientWorld world, BlockPos start, BlockPos target) {
+        CandidateSupplier supplier = new CandidateSupplier(world);
         Queue<AstarNode> open = new PriorityQueue<>();
         Map<BlockPos, AstarNode> nodes = new HashMap<>();
 
@@ -136,7 +137,7 @@ public class AstarBuilder {
                 return Optional.of(route);
             }
 
-            CandidateSupplier.getCandidates(world, next.currentPos).forEach(candidate -> {
+            supplier.getCandidates(next.currentPos).forEach(candidate -> {
                 AstarNode nextNode = nodes.getOrDefault(candidate.pos(), new AstarNode(candidate.pos()));
                 nodes.put(candidate.pos(), nextNode);
 

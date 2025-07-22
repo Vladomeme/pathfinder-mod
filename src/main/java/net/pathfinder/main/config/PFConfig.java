@@ -18,7 +18,6 @@ import java.nio.charset.StandardCharsets;
 /**
  * Main config which determines the behavior of the mod in general. Uses YetAnotherConfigLib for the edit screen.
  */
-//todo add a direction change cost modifier
 public class PFConfig {
 
     private static final File FILE = new File(FabricLoader.getInstance().getConfigDir().toFile(), "pathfinder.json");
