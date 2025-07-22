@@ -12,7 +12,7 @@ import net.minecraft.util.math.ChunkPos;
 import net.minecraft.util.math.Vec3d;
 import net.pathfinder.main.PathfinderMod;
 import net.pathfinder.main.graph.DebugManager;
-import net.pathfinder.main.graph.RuleHolder;
+import net.pathfinder.main.graph.PositionUtils;
 import net.pathfinder.main.graph.waypoint.GraphEditor;
 import net.pathfinder.main.graph.waypoint.TargetHolder;
 import net.pathfinder.main.graph.waypoint.WaypointIO;
@@ -171,21 +171,21 @@ public class GraphRenderer {
         PathfinderMod.executor.submit(() -> {
             List<Pair<Vec3d, Vec3d>> newLines = new ArrayList<>();
             for (Pair<Vec3d, Vec3d> line : lines) {
-                if (RuleHolder.isInRange(playerPos, line.getLeft()) || RuleHolder.isInRange(playerPos, line.getRight()))
+                if (PositionUtils.isInRange(playerPos, line.getLeft()) || PositionUtils.isInRange(playerPos, line.getRight()))
                     newLines.add(line);
             }
             linesActive = newLines;
 
             List<Pair<Vec3d, Vec3d>> newTeleportLines = new ArrayList<>();
             for (Pair<Vec3d, Vec3d> line : teleportLines) {
-                if (RuleHolder.isInRange(playerPos, line.getLeft()) || RuleHolder.isInRange(playerPos, line.getRight()))
+                if (PositionUtils.isInRange(playerPos, line.getLeft()) || PositionUtils.isInRange(playerPos, line.getRight()))
                     newTeleportLines.add(line);
             }
             teleportLinesActive = newTeleportLines;
 
             List<Vec3d> newTeleports = new ArrayList<>();
             for (Vec3d teleport : teleports) {
-                if (RuleHolder.isInRange(playerPos, teleport, cfg.renderRange))
+                if (PositionUtils.isInRange(playerPos, teleport, cfg.renderRange))
                     newTeleports.add(teleport);
             }
             teleportsActive = newTeleports;
@@ -200,7 +200,7 @@ public class GraphRenderer {
         matrices.push();
         matrices.translate(-camera.getX(), -camera.getY(), -camera.getZ());
         Matrix4f matrix4f = matrices.peek().getPositionMatrix();
-        drawLines(matrix4f, DebugManager.lines, cfg.lineColour4f);
+        if (!DebugManager.updatingLines) drawLines(matrix4f, DebugManager.lines, cfg.lineColour4f);
         if (DebugManager.start != null) drawBox(matrix4f, DebugManager.start3d, 1, cfg.startColour4f, cfg.startFillColour4f);
         if (DebugManager.target != null) drawBox(matrix4f, DebugManager.target3d, 1, cfg.selectedColour4f, cfg.selectedFillColour4f);
         matrices.pop();

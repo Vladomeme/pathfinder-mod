@@ -10,6 +10,8 @@ import java.util.List;
 
 public class DebugManager {
 
+    public static boolean updatingLines = false;
+
     public static BlockPos start;
     public static BlockPos target;
     public static Vec3d start3d;

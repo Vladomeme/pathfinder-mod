@@ -4,7 +4,7 @@ import com.google.gson.Gson;
 import io.netty.util.collection.LongObjectHashMap;
 import net.minecraft.util.math.BlockPos;
 import net.pathfinder.main.Output;
-import net.pathfinder.main.graph.RuleHolder;
+import net.pathfinder.main.graph.PositionUtils;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -105,8 +105,8 @@ public class DimensionData {
 
         for (Waypoint waypoint : waypoints.values()) {
             BlockPos pos = waypoint.pos();
-            if (RuleHolder.isInRange(target, pos, range)) {
-                int distance = RuleHolder.getSquaredDistance(target, pos);
+            if (PositionUtils.isInRange(target, pos, range)) {
+                int distance = PositionUtils.getSquaredDistance(target, pos);
                 if (minDistance > distance) {
                     minDistance = distance;
                     nearest = waypoint;

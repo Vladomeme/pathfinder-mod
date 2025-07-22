@@ -43,7 +43,10 @@ public class BaseBuilder {
             if (closed.size() >= cfg.baseGraphMaxNodes) break;
         }
         Output.chat("Found " + closed.size() + " nodes with " + links.size() + " links.");
+        DebugManager.updatingLines = true;
+        DebugManager.lines.clear();
         DebugManager.lines.addAll(links.stream().map(link -> new Pair<>(link.left.toCenterPos(), link.right.toCenterPos())).toList());
+        DebugManager.updatingLines = false;
 
         links.clear();
         closed.clear();

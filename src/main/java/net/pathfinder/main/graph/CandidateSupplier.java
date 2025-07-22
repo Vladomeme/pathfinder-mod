@@ -9,7 +9,7 @@ import net.minecraft.util.math.BlockPos;
 import java.util.ArrayList;
 import java.util.List;
 
-import static net.pathfinder.main.graph.RuleHolder.*;
+import static net.pathfinder.main.graph.PositionUtils.*;
 import static net.pathfinder.main.config.PFConfig.cfg;
 
 /**

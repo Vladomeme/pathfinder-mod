@@ -7,7 +7,7 @@ import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
 import net.pathfinder.main.Output;
-import net.pathfinder.main.graph.RuleHolder;
+import net.pathfinder.main.graph.PositionUtils;
 import net.pathfinder.main.graph.waypoint.data.DimensionData;
 import net.pathfinder.main.graph.waypoint.data.Waypoint;
 import net.pathfinder.main.graph.waypoint.data.WorldConfig;
@@ -49,7 +49,7 @@ public class WaypointIO {
                     Objects.requireNonNullElseGet(nearest, () -> WaypointIO.getData().waypoints.values().stream().findAny().get()).coordinates());
             return 1;
         }
-        if (!RuleHolder.isValidPosition(player.clientWorld, pos)) {
+        if (!PositionUtils.isValidPosition(player.clientWorld, pos)) {
             Output.chat("Invalid position for initializing.");
             return 1;
         }

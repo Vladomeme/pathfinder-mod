@@ -3,7 +3,7 @@ package net.pathfinder.main.graph.waypoint.path;
 import io.netty.util.collection.LongObjectHashMap;
 import net.minecraft.util.math.BlockPos;
 import net.pathfinder.main.Output;
-import net.pathfinder.main.graph.RuleHolder;
+import net.pathfinder.main.graph.PositionUtils;
 import net.pathfinder.main.graph.waypoint.WaypointIO;
 import net.pathfinder.main.graph.waypoint.data.Waypoint;
 
@@ -83,7 +83,7 @@ public class PathBuilder {
 
                 float newDistance;
                 if (current.isTeleport() && neighbour.isTeleport()) newDistance = current.distance;
-                else newDistance = current.distance + RuleHolder.getDistance(neighbour.pos(), current.pos());
+                else newDistance = current.distance + PositionUtils.getDistance(neighbour.pos(), current.pos());
 
                 if (neighbour.distance > newDistance) {
                     neighbour.distance = newDistance;
@@ -126,7 +126,7 @@ public class PathBuilder {
             float y = y2 + yVec * t;
             float z = z2 + zVec * t;
 
-            float distance = RuleHolder.getSquaredDistance(x1, y1, z1, x, y, z) + RuleHolder.getSquaredDistance(x2, y2, z2, x, y, z);
+            float distance = PositionUtils.getSquaredDistance(x1, y1, z1, x, y, z) + PositionUtils.getSquaredDistance(x2, y2, z2, x, y, z);
             if (minDistance > distance) {
                 minDistance = distance;
                 pos3 = new BlockPos((int) x, (int) y, (int) z);

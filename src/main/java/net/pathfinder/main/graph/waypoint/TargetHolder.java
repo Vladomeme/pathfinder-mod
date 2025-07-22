@@ -6,7 +6,7 @@ import net.minecraft.util.hit.HitResult;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
-import net.pathfinder.main.graph.RuleHolder;
+import net.pathfinder.main.graph.PositionUtils;
 import net.pathfinder.main.graph.waypoint.data.Waypoint;
 
 import java.util.Objects;
@@ -31,16 +31,16 @@ public class TargetHolder {
 
         Optional<Waypoint> waypoint = Stream.concat(GraphEditor.waypointsState.values().stream(), GraphEditor.currentSelection.values().stream())
                 .filter(w -> Math.abs(getAngleRadians(eyePos, w, lookVec)) <= cfg.targetMaxAngleRad)
-                .filter(w -> RuleHolder.isInRange(pos, w.pos().toCenterPos(), cfg.targetMaxDistance))
+                .filter(w -> PositionUtils.isInRange(pos, w.pos().toCenterPos(), cfg.targetMaxDistance))
                 .filter(w -> !cfg.targetLoSCheck ||
-                        player.raycast(RuleHolder.getDistance(w.pos()), 0, false).getType() == HitResult.Type.MISS)
+                        player.raycast(PositionUtils.getDistance(w.pos()), 0, false).getType() == HitResult.Type.MISS)
                 .min((w1, w2) -> {
                     double angle1 = getAngleRadians(eyePos, w1, lookVec);
                     double angle2 = getAngleRadians(eyePos, w2, lookVec);
                     if (Math.abs(MathHelper.wrapDegrees(angle1 - angle2)) < 0.1) {
                         double distance1 = eyePos.squaredDistanceTo(w1.x() + 0.5, w1.y() + 0.5, w1.z() + 0.5);
                         double distance2 = eyePos.squaredDistanceTo(w2.x() + 0.5, w2.y() + 0.5, w2.z() + 0.5);
-                        if (Math.min(distance1, distance2) < RuleHolder.getSquaredDistance(w1, w2) * 4) {
+                        if (Math.min(distance1, distance2) < PositionUtils.getSquaredDistance(w1, w2) * 4) {
                             return Double.compare(distance1, distance2);
                         }
                     }

@@ -3,6 +3,7 @@ package net.pathfinder.main.graph.astar;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
+import net.minecraft.block.Blocks;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.client.world.ClientWorld;
@@ -12,7 +13,7 @@ import net.pathfinder.main.Output;
 import net.pathfinder.main.PathfinderMod;
 import net.pathfinder.main.graph.CandidateSupplier;
 import net.pathfinder.main.graph.DebugManager;
-import net.pathfinder.main.graph.RuleHolder;
+import net.pathfinder.main.graph.PositionUtils;
 import net.pathfinder.main.graph.waypoint.GraphEditor;
 
 import java.util.*;
@@ -36,8 +37,6 @@ public class AstarBuilder {
         inProcess = true;
 
         PathfinderMod.executor.submit(() -> {
-            DebugManager.lines.clear();
-
             ClientPlayerEntity player = Objects.requireNonNull(MinecraftClient.getInstance().player);
             Optional<List<BlockPos>> path = runAstar(player.clientWorld, DebugManager.start, DebugManager.target);
 
@@ -89,8 +88,6 @@ public class AstarBuilder {
         inProcess = true;
 
         PathfinderMod.executor.submit(() -> {
-            DebugManager.lines.clear();
-
             ClientPlayerEntity player = context.getSource().getPlayer();
 
             BlockPos start = player.getBlockPos();
@@ -119,7 +116,7 @@ public class AstarBuilder {
         Queue<AstarNode> open = new PriorityQueue<>();
         Map<BlockPos, AstarNode> nodes = new HashMap<>();
 
-        AstarNode first = new AstarNode(start, null, 0d, RuleHolder.getDistance(start, target));
+        AstarNode first = new AstarNode(start, null, 0d, PositionUtils.getDistance(start, target));
         open.add(first);
         nodes.put(start, first);
 
@@ -145,7 +142,7 @@ public class AstarBuilder {
                 if (newScore < nextNode.currentScore) {
                     nextNode.previousPos = next.currentPos;
                     nextNode.currentScore = newScore;
-                    nextNode.estimatedScore = newScore + RuleHolder.getDistance(candidate.pos(), target);
+                    nextNode.estimatedScore = newScore + PositionUtils.getDistance(candidate.pos(), target);
                     open.add(nextNode);
                 }
             });
@@ -185,14 +182,13 @@ public class AstarBuilder {
         }
     }
 
-    //todo invalidate links going over water and climbable shit
     /**
      * Used in path smoothing to check if smoothed path segments are traversable.
      */
     private static boolean isLinkValid(ClientWorld world, BlockPos pos1, BlockPos pos2) {
         if (pos1.getY() != pos2.getY()) return false;
 
-        float steps = RuleHolder.getDistance(pos1, pos2) * 5;
+        float steps = PositionUtils.getDistance(pos1, pos2) * 5;
         float xStep = (pos2.getX() - pos1.getX()) / steps;
         float zStep = (pos2.getZ() - pos1.getZ()) / steps;
 
@@ -220,8 +216,15 @@ public class AstarBuilder {
                 currentZ = pointerIntZ;
             }
         }
-        for (BlockPos pos : positions) {
-            if (!RuleHolder.isValidPosition(world, pos)) return false;
+        if (world.getBlockState(pos1.mutableCopy().add(0, -1, 0)).getBlock().equals(Blocks.WATER)) {
+            for (BlockPos pos : positions) {
+                if (!PositionUtils.isValidSwimPosition(world, pos)) return false;
+            }
+        }
+        else {
+            for (BlockPos pos : positions) {
+                if (!PositionUtils.isValidWalkPosition(world, pos)) return false;
+            }
         }
         return true;
     }
@@ -265,7 +268,10 @@ public class AstarBuilder {
     }
 
     private static void setRenderPath(List<BlockPos> path) {
+        DebugManager.updatingLines = true;
+        DebugManager.lines.clear();
         for (int i = 0; i < path.size() - 1; i++)
             DebugManager.lines.add(new Pair<>(path.get(i).toCenterPos(), path.get(i + 1).toCenterPos()));
+        DebugManager.updatingLines = false;
     }
 }

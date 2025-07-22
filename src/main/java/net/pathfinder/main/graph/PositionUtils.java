@@ -20,7 +20,7 @@ import static net.pathfinder.main.config.PFConfig.cfg;
 /**
  * Contains "rule" methods used for determining valid path positions and distance between them.
  */
-public class RuleHolder {
+public class PositionUtils {
 
     public static boolean isPassable(ClientWorld world, BlockPos pos, int xVec, int yVec, int zVec) {
         BlockState state = world.getBlockState(pos.mutableCopy().add(xVec, yVec, zVec));
@@ -44,6 +44,11 @@ public class RuleHolder {
                 || state.isIn(BlockTags.CLIMBABLE) || state.getBlock().equals(Blocks.WATER);
     }
 
+    public static boolean isStandableSolid(ClientWorld world, BlockPos pos, int xVec, int yVec, int zVec) {
+        BlockState state = world.getBlockState(pos.mutableCopy().add(xVec, yVec, zVec));
+        return (state.getBlock().collidable && !isIn(CARPETS, state) && !state.getBlock().equals(Blocks.LIGHT));
+    }
+
     public static boolean notFence(ClientWorld world, BlockPos pos, int xVec, int yVec, int zVec) {
         BlockState state = world.getBlockState(pos.mutableCopy().add(xVec, yVec, zVec));
         return !state.isIn(BlockTags.FENCES) && !state.isIn(BlockTags.WALLS);
@@ -63,11 +68,28 @@ public class RuleHolder {
     }
 
     public static boolean isValidPosition(ClientWorld world, BlockPos pos) {
-        boolean b1 = RuleHolder.isStandable(world, pos, 0, -1, 0);
-        boolean b2 = RuleHolder.isPassable(world, pos) && isSafe(world, pos);
-        boolean b3 = RuleHolder.isPassable(world, pos, 0, 1, 0);
+        boolean b1 = PositionUtils.isStandable(world, pos, 0, -1, 0);
+        boolean b2 = PositionUtils.isPassable(world, pos) && isSafe(world, pos);
+        boolean b3 = PositionUtils.isPassable(world, pos, 0, 1, 0);
 
         return b1 && b2 && b3;
+    }
+
+    @SuppressWarnings("BooleanMethodIsAlwaysInverted")
+    public static boolean isValidWalkPosition(ClientWorld world, BlockPos pos) {
+        boolean b1 = PositionUtils.isStandableSolid(world, pos, 0, -1, 0);
+        boolean b2 = PositionUtils.isPassable(world, pos) && isSafe(world, pos);
+        boolean b3 = PositionUtils.isPassable(world, pos, 0, 1, 0);
+
+        return b1 && b2 && b3;
+    }
+
+    @SuppressWarnings("BooleanMethodIsAlwaysInverted")
+    public static boolean isValidSwimPosition(ClientWorld world, BlockPos pos) {
+        boolean b1 = world.getBlockState(pos.mutableCopy().add(0, -1, 0)).getBlock().equals(Blocks.WATER);
+        boolean b2 = PositionUtils.isPassable(world, pos) && isSafe(world, pos);
+
+        return b1 && b2;
     }
 
     public static boolean outOfRangeTrue(BlockPos pos) {

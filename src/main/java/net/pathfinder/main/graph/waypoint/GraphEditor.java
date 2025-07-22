@@ -6,7 +6,7 @@ import net.minecraft.client.MinecraftClient;
 import net.minecraft.util.math.BlockPos;
 import net.pathfinder.main.Output;
 import net.pathfinder.main.PathfinderMod;
-import net.pathfinder.main.graph.RuleHolder;
+import net.pathfinder.main.graph.PositionUtils;
 import net.pathfinder.main.graph.astar.AstarBuilder;
 import net.pathfinder.main.graph.render.GraphRenderer;
 import net.pathfinder.main.graph.waypoint.data.LocationData;
@@ -87,8 +87,8 @@ public class GraphEditor {
 
         for (Waypoint waypoint : waypointsState.values()) {
             BlockPos pos = waypoint.pos();
-            if (RuleHolder.isInRange(target, pos, cfg.nearestSearchRange)) {
-                int distance = RuleHolder.getSquaredDistance(target, pos);
+            if (PositionUtils.isInRange(target, pos, cfg.nearestSearchRange)) {
+                int distance = PositionUtils.getSquaredDistance(target, pos);
                 if (distance < minDistance) {
                     nearest = waypoint;
                     minDistance = distance;
@@ -97,8 +97,8 @@ public class GraphEditor {
         }
         for (Waypoint waypoint : currentSelection.values()) {
             BlockPos pos = waypoint.pos();
-            if (RuleHolder.isInRange(target, pos, cfg.nearestSearchRange)) {
-                int distance = RuleHolder.getSquaredDistance(target, pos);
+            if (PositionUtils.isInRange(target, pos, cfg.nearestSearchRange)) {
+                int distance = PositionUtils.getSquaredDistance(target, pos);
                 if (distance < minDistance) {
                     nearest = waypoint;
                     minDistance = distance;
@@ -143,10 +143,10 @@ public class GraphEditor {
         Waypoint original = waypoint;
         List<BlockPos> path = AstarBuilder.findAndReturn(pos, waypoint.pos());
 
-        int minDistance = RuleHolder.getSquaredDistance(waypoint, pos);
+        int minDistance = PositionUtils.getSquaredDistance(waypoint, pos);
         for (BlockPos node : path) {
             Waypoint nearest = getNearest(node);
-            int distance = RuleHolder.getSquaredDistance(nearest, node);
+            int distance = PositionUtils.getSquaredDistance(nearest, node);
 
             if (distance < minDistance) {
                 minDistance = distance;
@@ -421,7 +421,7 @@ public class GraphEditor {
                 boolean shouldAdd = false;
                 for (Waypoint w2 : graph2.values()) {
                     if (closed.containsKey(w2.id())) continue;
-                    if (RuleHolder.isInRange(w1, w2, range)) {
+                    if (PositionUtils.isInRange(w1, w2, range)) {
                         shouldAdd = true;
                         graph2options.add(w2);
                         closed.put(w2.id(), Boolean.TRUE);
@@ -437,7 +437,7 @@ public class GraphEditor {
 
         for (Waypoint w1 : graph1options) {
             for (Waypoint w2 : graph2options) {
-                int distance = RuleHolder.getSquaredDistance(w1, w2);
+                int distance = PositionUtils.getSquaredDistance(w1, w2);
                 if (distance < minDistance) {
                     gapWaypoint1 = w1;
                     gapWaypoint2 = w2;
