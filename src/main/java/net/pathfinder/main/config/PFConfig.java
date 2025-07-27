@@ -24,6 +24,7 @@ public class PFConfig {
     public static final PFConfig cfg = read();
 
     //### GENERAL
+    public boolean dynamicPathSmoothing = true;
     public int maxOffGraphDistance = 200;
     public int recomputingDistance = 20;
     public int destinationRange = 4;
@@ -60,7 +61,9 @@ public class PFConfig {
     public int renderRange = 64;
     public float textScale = 0.75f;
     public int pathDisplayLength = 50;
-    public float pathParticleStep = 0.333f;
+    public float pathParticleStep = 1.0f;
+    public boolean renderBeacon = true;
+    public int beaconColor = 3847130;
     //Graph colours
     public int lineColourRaw = -16711681;
     public int newLineColourRaw = -16711936;
@@ -151,6 +154,11 @@ public class PFConfig {
 
                 .category(ConfigCategory.createBuilder()
                         .name(Text.of("General"))
+
+                        .option(Option.<Boolean>createBuilder()
+                                .name(Text.literal("Use dynamic path smoothing"))
+                                .binding(true, () -> dynamicPathSmoothing, newVal -> dynamicPathSmoothing = newVal)
+                                .controller(TickBoxControllerBuilder::create).build())
 
                         .option(Option.<Integer>createBuilder()
                                 .name(Text.literal("Max off-graph path distance"))
@@ -299,8 +307,19 @@ public class PFConfig {
 
                         .option(Option.<Float>createBuilder()
                                 .name(Text.literal("Path particle step"))
-                                .binding(0.333f, () -> pathParticleStep, newVal -> pathParticleStep = newVal)
+                                .binding(1.0f, () -> pathParticleStep, newVal -> pathParticleStep = newVal)
                                 .controller(FloatFieldControllerBuilder::create).build())
+
+                        .option(Option.<Boolean>createBuilder()
+                                .name(Text.literal("Render beacon"))
+                                .binding(true, () -> renderBeacon, newVal -> renderBeacon = newVal)
+                                .controller(TickBoxControllerBuilder::create).build())
+
+                        .option(Option.<Color>createBuilder()
+                                .name(Text.literal("Beacon color"))
+                                .binding(new Color(3847130),
+                                        () -> new Color(beaconColor), newVal -> beaconColor = newVal.getRGB())
+                                .controller(ColorControllerBuilder::create).build())
 
                         .group(OptionGroup.createBuilder()
                                 .name(Text.of("Graph colours"))

@@ -1,5 +1,6 @@
 package net.pathfinder.main.graph;
 
+import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.client.world.ClientWorld;
@@ -31,54 +32,50 @@ public class CandidateSupplier {
         this.pos = pos;
         this.nodes = new ArrayList<>();
 
-        moveStraight0(-1, 0);
-        moveStraight0(0, -1);
-        moveStraight0(1, 0);
-        moveStraight0(0, 1);
+        moveStraight0(addXY(pos, -1, -1));
+        moveStraight0(addZY(pos, -1, -1));
+        moveStraight0(addXY(pos, 1, -1));
+        moveStraight0(addZY(pos, 1, -1));
 
-        moveDiagonal0(-1, -1);
-        moveDiagonal0(-1, 1);
-        moveDiagonal0(1, -1);
-        moveDiagonal0(1, 1);
+        moveDiagonal0(add(pos, -1, -1, -1));
+        moveDiagonal0(add(pos, -1, -1, 1));
+        moveDiagonal0(add(pos, 1, -1, -1));
+        moveDiagonal0(add(pos, 1, -1, 1));
 
-        moveStraight1(-1, 0);
-        moveStraight1(0, -1);
-        moveStraight1(1, 0);
-        moveStraight1(0, 1);
+        moveStraight1(addX(pos, -1));
+        moveStraight1(addZ(pos, -1));
+        moveStraight1(addX(pos, 1));
+        moveStraight1(addZ(pos, 1));
 
-        moveDiagonal1(-1, -1);
-        moveDiagonal1(-1, 1);
-        moveDiagonal1(1, -1);
-        moveDiagonal1(1, 1);
+        moveDiagonal1(addXZ(pos, -1, -1));
+        moveDiagonal1(addXZ(pos, -1, 1));
+        moveDiagonal1(addXZ(pos, 1, -1));
+        moveDiagonal1(addXZ(pos, 1, 1));
 
-        moveStraight2(-1, 0);
-        moveStraight2(0, -1);
-        moveStraight2(1, 0);
-        moveStraight2(0, 1);
+        moveStraight2(addXY(pos, -1, 1));
+        moveStraight2(addZY(pos, -1, 1));
+        moveStraight2(addXY(pos, 1, 1));
+        moveStraight2(addZY(pos, 1, 1));
 
-        moveDiagonal2(-1, -1);
-        moveDiagonal2(-1, 1);
-        moveDiagonal2(1, -1);
-        moveDiagonal2(1, 1);
+        moveDiagonal2(add(pos, -1, 1, -1));
+        moveDiagonal2(add(pos, -1, 1, 1));
+        moveDiagonal2(add(pos, 1, 1, -1));
+        moveDiagonal2(add(pos, 1, 1, 1));
 
-        moveDown();
-        moveUp();
+        moveDown(addY(pos, -1));
+        moveUp(addY(pos, 1));
 
         return nodes;
     }
 
-    private void moveStraight0(int xVec, int zVec) {
-        BlockPos newPos = pos.mutableCopy().add(xVec, -1, zVec);
-
+    private void moveStraight0(BlockPos newPos) {
         boolean b1 = isValidPosition(world, newPos);
         boolean b2 = isPassable(world, newPos, 0, 2, 0);
 
         if (b1 && b2) addNode(newPos, cfg.diagonalCost, Movement.DOWN);
     }
 
-    private void moveDiagonal0(int xVec, int zVec) {
-        BlockPos newPos = pos.mutableCopy().add(xVec, -1, zVec);
-
+    private void moveDiagonal0(BlockPos newPos) {
         int xVector = pos.getX() - newPos.getX();
         int zVector = pos.getZ() - newPos.getZ();
 
@@ -92,17 +89,13 @@ public class CandidateSupplier {
         if (b1 && b2 && ((b3 && b4) || (b5 && b6))) addNode(newPos, cfg.cubeDiagonalCost, Movement.DOWN);
     }
 
-    private void moveStraight1(int xVec, int zVec) {
-        BlockPos newPos = pos.mutableCopy().add(xVec, 0, zVec);
-
+    private void moveStraight1(BlockPos newPos) {
         boolean b1 = isValidPosition(world, newPos);
 
         if (b1) addNode(newPos, cfg.straightCost, Movement.LEVEL);
     }
 
-    private void moveDiagonal1(int xVec, int zVec) {
-        BlockPos newPos = pos.mutableCopy().add(xVec, 0, zVec);
-
+    private void moveDiagonal1(BlockPos newPos) {
         int xVector = pos.getX() - newPos.getX();
         int zVector = pos.getZ() - newPos.getZ();
 
@@ -115,9 +108,7 @@ public class CandidateSupplier {
         if (b1 && ((b2 && b3) || (b4 && b5))) addNode(newPos, cfg.diagonalCost, Movement.LEVEL);
     }
 
-    private void moveStraight2(int xVec, int zVec) {
-        BlockPos newPos = pos.mutableCopy().add(xVec, 1, zVec);
-
+    private void moveStraight2(BlockPos newPos) {
         boolean b1 = isValidPosition(world, newPos) && notFence(world, newPos, 0, -1, 0);
         boolean b2 = isSolid(world, pos, 0, -1, 0);
         boolean b3 = isPassable(world, pos, 0, 2, 0);
@@ -125,9 +116,7 @@ public class CandidateSupplier {
         if (b1 && b2 && b3) addNode(newPos, cfg.diagonalCost, Movement.UP);
     }
 
-    private void moveDiagonal2(int xVec, int zVec) {
-        BlockPos newPos = pos.mutableCopy().add(xVec, 1, zVec);
-
+    private void moveDiagonal2(BlockPos newPos) {
         int xVector = pos.getX() - newPos.getX();
         int zVector = pos.getZ() - newPos.getZ();
 
@@ -142,9 +131,7 @@ public class CandidateSupplier {
         if (b1 && b2 && ((b3 && b4) || (b5 && b6)) && b7) addNode(newPos, cfg.cubeDiagonalCost, Movement.UP);
     }
 
-    private void moveDown() {
-        BlockPos newPos = pos.mutableCopy().add(0, -1, 0);
-
+    private void moveDown(BlockPos newPos) {
         boolean b1 = isClimbable(world, newPos);
         boolean b2 = isPassable(world, pos);
 
@@ -157,9 +144,7 @@ public class CandidateSupplier {
         }
     }
 
-    private void moveUp() {
-        BlockPos newPos = pos.mutableCopy().add(0, 1, 0);
-
+    private void moveUp(BlockPos newPos) {
         boolean b1 = isClimbable(world, newPos);
         boolean b2 = isPassable(world, newPos, 0, 1, 0);
 
@@ -178,13 +163,16 @@ public class CandidateSupplier {
     }
 
     private float computeCost(BlockPos pos, float cost, Movement move) {
-        BlockState state1 = world.getBlockState(pos.mutableCopy().add(0, -1, 0));
+        BlockState state1 = world.getBlockState(addY(pos, -1));
         BlockState state2 = world.getBlockState(pos);
-        BlockState state3 = world.getBlockState(pos.mutableCopy().add(0, 1, 0));
+        BlockState state3 = world.getBlockState(addY(pos, 1));
+        Block block1 = state1.getBlock();
+        Block block2 = state2.getBlock();
+        Block block3 = state3.getBlock();
         
         if (move != Movement.LEVEL) cost += cfg.yChangeCost;
-        if (state1.getBlock().equals(Blocks.WATER) || state2.getBlock().equals(Blocks.WATER)) cost *= cfg.waterMulti;
-        if (state2.getBlock().equals(Blocks.COBWEB) || state3.getBlock().equals(Blocks.COBWEB)) cost += cfg.cobwebMulti;
+        if (block1.equals(Blocks.WATER) || block2.equals(Blocks.WATER)) cost *= cfg.waterMulti;
+        if (block2.equals(Blocks.COBWEB) || block3.equals(Blocks.COBWEB)) cost += cfg.cobwebMulti;
         if (move != Movement.LEVEL && state1.isIn(BlockTags.STAIRS)) cost = cfg.stairsCost;
 
         return cost;

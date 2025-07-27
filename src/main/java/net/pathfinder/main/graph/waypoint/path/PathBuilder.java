@@ -1,9 +1,11 @@
 package net.pathfinder.main.graph.waypoint.path;
 
 import io.netty.util.collection.LongObjectHashMap;
-import net.minecraft.util.math.BlockPos;
+import net.minecraft.client.world.ClientWorld;
+import net.minecraft.util.math.Vec3i;
 import net.pathfinder.main.Output;
 import net.pathfinder.main.graph.PositionUtils;
+import net.pathfinder.main.graph.astar.AstarBuilder;
 import net.pathfinder.main.graph.waypoint.WaypointIO;
 import net.pathfinder.main.graph.waypoint.data.Waypoint;
 
@@ -19,7 +21,7 @@ public class PathBuilder {
     /**
      * Calculates the path by running Dijkstra's on a graph and connecting start/end segments.
      */
-    public static PathNode getPath(BlockPos start, BlockPos end) {
+    public static PathNode getPath(Vec3i start, Vec3i end) {
         if (WaypointIO.getData() == null) {
             Output.chat("Couldn't find a path - dimension data is unavailable.");
             return null;
@@ -99,7 +101,7 @@ public class PathBuilder {
     /**
      * Returns the nearest point of a graph (including connections between points).
      */
-    private static BlockPos getNearestPoint(BlockPos pos, Waypoint nearest) {
+    private static Vec3i getNearestPoint(Vec3i pos, Waypoint nearest) {
         int x1 = pos.getX();
         int y1 = pos.getY();
         int z1 = pos.getZ();
@@ -109,9 +111,9 @@ public class PathBuilder {
         int z2 = nearest.z();
 
         float minDistance = Float.MAX_VALUE;
-        BlockPos pos1 = nearest.pos();
-        BlockPos pos2 = null;
-        BlockPos pos3 = null;
+        Vec3i pos1 = nearest.pos();
+        Vec3i pos2 = null;
+        Vec3i pos3 = null;
 
         for (long l : nearest.neighbours()) {
             Waypoint complement = WaypointIO.getData().waypoints.get(l);
@@ -129,7 +131,7 @@ public class PathBuilder {
             float distance = PositionUtils.getSquaredDistance(x1, y1, z1, x, y, z) + PositionUtils.getSquaredDistance(x2, y2, z2, x, y, z);
             if (minDistance > distance) {
                 minDistance = distance;
-                pos3 = new BlockPos((int) x, (int) y, (int) z);
+                pos3 = new Vec3i((int) x, (int) y, (int) z);
                 pos2 = complement.pos();
             }
         }
@@ -165,7 +167,7 @@ public class PathBuilder {
     /**
      * Finds the nearest point on a line (pos1; pos2).
      */
-    public static float[] getNearestPointInPath(BlockPos playerPos, BlockPos pos1, BlockPos pos2) {
+    public static float[] getNearestPointOnLine(Vec3i playerPos, Vec3i pos1, Vec3i pos2) {
         int x1 = playerPos.getX();
         int y1 = playerPos.getY();
         int z1 = playerPos.getZ();
@@ -209,7 +211,32 @@ public class PathBuilder {
         return toFloatArray(pos2);
     }
 
-    private static float[] toFloatArray(BlockPos pos) {
+    public static float[] getVisiblePointInPath(ClientWorld world, Vec3i playerPos, PathNode node) {
+        PathNode visible = node;
+        while (PositionUtils.getSquaredDistance(node) < 900) {
+            if (AstarBuilder.isLinkValid(world, playerPos, node)) visible = node;
+            node = node.next;
+            if (node == null) break;
+        }
+        return toFloatArray(visible);
+    }
+
+    public static PathNode getNearestPointInPath(Vec3i start, PathNode node) {
+        PathNode nearest = node;
+        int minDistance = PositionUtils.getSquaredDistance(start, node);
+        node = node.next;
+        while (node != null) {
+            int distance = PositionUtils.getSquaredDistance(start, node);
+            if (distance < minDistance) {
+                nearest = node;
+                minDistance = distance;
+            }
+            node = node.next;
+        }
+        return nearest;
+    }
+
+    private static float[] toFloatArray(Vec3i pos) {
         return new float[]{pos.getX(), pos.getY(), pos.getZ()};
     }
 }

@@ -3,16 +3,27 @@ package net.pathfinder.main.graph.waypoint.path;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
+import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderContext;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayerEntity;
+import net.minecraft.client.render.block.entity.BeaconBlockEntityRenderer;
+import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.client.world.ClientWorld;
 import net.minecraft.particle.ParticleTypes;
+import net.minecraft.sound.SoundCategory;
+import net.minecraft.sound.SoundEvents;
+import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.ChunkPos;
+import net.minecraft.util.math.Vec3d;
+import net.minecraft.util.math.Vec3i;
 import net.pathfinder.main.Output;
 import net.pathfinder.main.graph.PositionUtils;
+import net.pathfinder.main.graph.astar.AstarBuilder;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 import static net.pathfinder.main.config.PFConfig.cfg;
 
@@ -22,15 +33,19 @@ public class PathManager {
 
     static PathNode head;
     static PathNode nearest;
-    static final List<BlockPos> swirls = new ArrayList<>();
+    static PathNode last;
+    static final List<Vec3i> swirls = new ArrayList<>();
     static boolean pathReached = false;
+    static ChunkPos lastPos;
 
     static int ticks = 0;
+
+    static final Identifier BEAM_TEXTURE = Identifier.ofVanilla("textures/entity/beacon_beam.png");
 
     public static void tick() {
         ticks++;
 
-        positionUpdate();
+        positionUpdate(Objects.requireNonNull(client.player));
         if (ticks % 20 == 0) displayPath();
         if (!swirls.isEmpty()) displaySwirls();
         //displayNodes();
@@ -52,41 +67,54 @@ public class PathManager {
 
         pathReached = false;
         nearest = head;
-        positionUpdate();
+        last = head.getLast();
+        positionUpdate(player);
         displayPath();
         Output.chat("Destination set: " + x + " " + y + " " + z + ".");
+        assert client.world != null;
+        client.world.playSound(player.getX(), player.getY(), player.getZ(), SoundEvents.BLOCK_AMETHYST_BLOCK_RESONATE,
+                SoundCategory.PLAYERS, 1, 1, false);
         return 1;
     }
 
     private static void recompute() {
         ClientPlayerEntity player = client.player;
         assert player != null;
+        assert client.world != null;
 
-        Output.logWarn("Recomputing path!");
+        Output.actionBar("Rebuilding path!");
+        client.world.playSound(player.getX(), player.getY(), player.getZ(), SoundEvents.BLOCK_AMETHYST_BLOCK_RESONATE,
+                SoundCategory.PLAYERS, 1, 1, false);
 
-        head = PathBuilder.getPath(player.getBlockPos(), head.getLast().pos);
+        head = PathBuilder.getPath(player.getBlockPos(), last);
         if (head == null) return;
 
         pathReached = false;
         nearest = head;
-        positionUpdate();
+        last = head.getLast();
+        positionUpdate(player);
         displayPath();
     }
 
-    //todo save last in a field
-    private static void positionUpdate() {
+    private static void positionUpdate(ClientPlayerEntity player) {
+        ChunkPos currentPos = player.getChunkPos();
+        if (currentPos != lastPos) {
+            lastPos = currentPos;
+            applySmoothing();
+        }
+
         int minDistance = Integer.MAX_VALUE;
 
         PathNode current = head;
         while (current != null) {
-            int distance = PositionUtils.getSquaredDistance(current.pos);
+            int distance = PositionUtils.getSquaredDistance(current);
             if (minDistance > distance) {
                 minDistance = distance;
                 nearest = current;
             }
             current = current.next;
         }
-        if (PositionUtils.getSquaredDistance(nearest.getLast().pos) < cfg.destinationRangeSquared) {
+        if (PositionUtils.getSquaredDistance(last) < cfg.destinationRangeSquared) {
             Output.chat("Destination reached!", Output.Color.GREEN);
             clear();
             return;
@@ -96,20 +124,38 @@ public class PathManager {
         updateSwirls();
     }
 
+    private static void applySmoothing() {
+        if (nearest.next == null || nearest.next.next == null) return;
+
+        int distance = Math.max((client.options.getClampedViewDistance() - 2) * 16, 32);
+        distance = distance * distance;
+
+        PathNode start = nearest;
+        PathNode end = nearest.next.next;
+
+        while (end.next != null
+                && PositionUtils.getSquaredDistance(start) < distance
+                && PositionUtils.getSquaredDistance(end) < distance) {
+            if (AstarBuilder.isLinkValid(client.world, start, end)) start.next = end;
+            else start = start.next;
+            end = end.next;
+        }
+    }
+
     private static void updateSwirls() {
         swirls.clear();
         double travelDistance = cfg.pathDisplayLength;
 
         PathNode current = nearest;
-        travelDistance -= PositionUtils.getDistance(current.pos);
+        travelDistance -= PositionUtils.getDistance(current);
 
         while (travelDistance > 0 && current.next != null) {
             if (current.isTeleport && current.next.isTeleport)
-                swirls.add(current.pos);
-            travelDistance -= PositionUtils.getDistance(current.pos, current.next.pos);
+                swirls.add(current);
+            travelDistance -= PositionUtils.getDistance(current, current.next);
             current = current.next;
         }
-        if (current.next == null) swirls.add(current.pos);
+        if (current.next == null) swirls.add(current);
     }
 
     @SuppressWarnings("unused")
@@ -119,9 +165,9 @@ public class PathManager {
         PathNode current = head;
         while (current != null) {
             world.addParticle(ParticleTypes.HEART,
-                    current.x() + 0.5 + (Math.random() - Math.random()) * 0.25,
-                    current.y() + 1.0 + (Math.random() - Math.random()) * 0.25,
-                    current.z() + 0.5 + (Math.random() - Math.random()) * 0.25, 0, 0, 0);
+                    current.getX() + 0.5 + (Math.random() - Math.random()) * 0.25,
+                    current.getY() + 1.0 + (Math.random() - Math.random()) * 0.25,
+                    current.getZ() + 0.5 + (Math.random() - Math.random()) * 0.25, 0, 0, 0);
             current = current.next;
         }
     }
@@ -129,86 +175,82 @@ public class PathManager {
     //todo improve visuals
     private static void displayPath() {
         assert client.player != null;
-
-        int i = 0;
-        float pathLength = cfg.pathDisplayLength * (1 / cfg.pathParticleStep);
-
-        //Last node shortcut
-        if (nearest.next == null) {
-            float distance = PositionUtils.getDistance(nearest.pos);
-            float localDistance = 0;
-            while (i++ < pathLength && localDistance < distance) {
-                addPathParticles(localDistance / distance, client.player.getBlockPos(), nearest.pos);
-                localDistance += cfg.pathParticleStep;
-            }
-            return;
-        }
+        float pathLength = cfg.pathDisplayLength;
+        float leftover = 0;
 
         //Player to nearest point
-        float distance = PositionUtils.getDistance(nearest.pos);
-        float[] trueNearest = PathBuilder.getNearestPointInPath(client.player.getBlockPos(), nearest.pos, nearest.next.pos);
-        float localDistance = 0;
-        while (i++ < pathLength && localDistance < distance) {
-            addPathParticles(localDistance / distance, client.player.getBlockPos(), trueNearest);
-            localDistance += cfg.pathParticleStep;
+        float segmentLength, localDistance;
+        float[] nearestPoint;
+        if (!pathReached) {
+            nearestPoint = PathBuilder.getVisiblePointInPath(client.world, client.player.getBlockPos(), nearest);
+            segmentLength = PositionUtils.getDistance(nearestPoint[0], nearestPoint[1], nearestPoint[2]);
+            if (segmentLength > 0.1f) {
+                localDistance = 0;
+                while (pathLength > 0 && localDistance < segmentLength) {
+                    addPathParticles(localDistance / segmentLength, client.player.getBlockPos(), nearestPoint);
+                    localDistance += cfg.pathParticleStep;
+                    pathLength -= cfg.pathParticleStep;
+                }
+                leftover = localDistance - segmentLength;
+            }
+            nearest = PathBuilder.getNearestPointInPath(new Vec3i((int) nearestPoint[0], (int) nearestPoint[1], (int) nearestPoint[2]), head);
         }
+        else nearestPoint = PathBuilder.getNearestPointOnLine(client.player.getBlockPos(), nearest, nearest.next);
 
         //Nearest point to next node
-        localDistance = 0;
-        distance = PositionUtils.getDistance(trueNearest, nearest.next.pos);
-        while (i++ < pathLength && localDistance < distance) {
-            addPathParticles(localDistance / distance, trueNearest, nearest.next.pos);
-            localDistance += cfg.pathParticleStep;
+        segmentLength = PositionUtils.getDistance(nearestPoint, nearest.next);
+        if (segmentLength > 0.1f) {
+            localDistance = leftover;
+            while (pathLength > 0 && localDistance < segmentLength) {
+                addPathParticles(localDistance / segmentLength, nearestPoint, nearest.next);
+                localDistance += cfg.pathParticleStep;
+                pathLength -= cfg.pathParticleStep;
+            }
+            leftover = localDistance - segmentLength;
         }
 
         //Node to node, skipping teleportation segments
-        PathNode current = nearest;
-        if (current.isTeleport) {
-            if (current.next.isTeleport) {
-                current = current.next;
-                if (current.next == null) return;
+        PathNode current = nearest.next;
+        if (current == null) return;
+        while (pathLength > 0) {
+            segmentLength = PositionUtils.getDistance(current, current.next);
+            if (segmentLength > 0.1f) {
+                localDistance = leftover;
+                while (pathLength > 0 && localDistance < segmentLength) {
+                    addPathParticles(localDistance / segmentLength, current, current.next);
+                    localDistance += cfg.pathParticleStep;
+                    pathLength -= cfg.pathParticleStep;
+                }
+                leftover = localDistance - segmentLength;
             }
-        }
-        distance = PositionUtils.getDistance(current.pos, current.next.pos);
-        localDistance = 0;
-        while (i++ < pathLength) {
-            if (localDistance > distance) {
+            current = current.next;
+            if (current.next == null) break;
+            if (current.isTeleport && current.next.isTeleport) {
                 current = current.next;
                 if (current.next == null) break;
-                if (current.isTeleport) {
-                    if (current.next.isTeleport) {
-                        current = current.next;
-                        if (current.next == null) return;
-                    }
-                }
-                distance = PositionUtils.getDistance(current.pos, current.next.pos);
-                localDistance = 0;
             }
-            addPathParticles(localDistance / distance, current.pos, current.next.pos);
-            localDistance += cfg.pathParticleStep;
         }
     }
 
-    private static void addPathParticles(float fraction, float[] arr, BlockPos pos) {
+    private static void addPathParticles(float fraction, float[] arr, Vec3i pos) {
         addPathParticles(fraction, arr[0], arr[1], arr[2], pos.getX(), pos.getY(), pos.getZ());
     }
 
-    private static void addPathParticles(float fraction, BlockPos pos, float[] arr) {
+    private static void addPathParticles(float fraction, Vec3i pos, float[] arr) {
         addPathParticles(fraction, pos.getX(), pos.getY(), pos.getZ(), arr[0], arr[1], arr[2]);
     }
 
-    private static void addPathParticles(float fraction, BlockPos start, BlockPos end) {
+    private static void addPathParticles(float fraction, Vec3i start, Vec3i end) {
         addPathParticles(fraction, start.getX(), start.getY(), start.getZ(), end.getX(), end.getY(), end.getZ());
     }
 
     private static void addPathParticles(float fraction, float x1, float y1, float z1, float x2, float y2, float z2) {
-        double x = x1 + (x2 - x1) * fraction + 0.5;
-        double y = y1 + (y2 - y1) * fraction + 0.5;
-        double z = z1 + (z2 - z1) * fraction + 0.5;
+        double add = 0.5 + (Math.random() - Math.random()) * 0.2;
+        double x = x1 + (x2 - x1) * fraction + add;
+        double y = y1 + (y2 - y1) * fraction + add;
+        double z = z1 + (z2 - z1) * fraction + add;
 
-        ClientWorld world = client.world;
-        assert world != null;
-        world.addImportantParticle(ParticleTypes.END_ROD, x, y, z, 0, 0, 0);
+        Objects.requireNonNull(client.world).addImportantParticle(ParticleTypes.END_ROD, x, y, z, 0, 0, 0);
     }
 
     //x(t) = R * cos(t), y(t) = a * t, z(t) = R * sin(t).
@@ -225,7 +267,7 @@ public class PathManager {
         ClientWorld world = client.world;
         assert world != null;
 
-        for (BlockPos pos : swirls) {
+        for (Vec3i pos : swirls) {
             double x = pos.getX();
             double z = pos.getZ();
             double y = pos.getY() + swirlY;
@@ -235,6 +277,26 @@ public class PathManager {
         }
     }
 
+    @SuppressWarnings("ConstantConditions")
+    public static void renderBeacon(WorldRenderContext context) {
+        ClientWorld world = client.world;
+        Vec3d pos = client.gameRenderer.getCamera().getPos();
+        if (world == null) return;
+
+        float distance = PositionUtils.getDistance(last);
+        if (distance < 30) return;
+        double beaconX = distance < 150 ? (double) last.getX() - pos.getX() : ((last.getX() - pos.getX()) / distance) * 150;
+        double beaconZ = distance < 150 ? (double) last.getZ() - pos.getZ() : ((last.getZ() - pos.getZ()) / distance) * 150;
+
+        MatrixStack matrices = context.matrixStack();
+        matrices.push();
+        matrices.translate(beaconX, -(pos.getY() + 64), beaconZ);
+        BeaconBlockEntityRenderer.renderBeam(context.matrixStack(), context.consumers(), BEAM_TEXTURE, 0, 1,
+                world.getTime(), 0, 1024, cfg.beaconColor, 0.3f, 0.3f
+        );
+        matrices.pop();
+    }
+
     public static boolean isActive() {
         return head != null;
     }
@@ -242,6 +304,9 @@ public class PathManager {
     @SuppressWarnings("SameReturnValue")
     public static int clear() {
         head = null;
+        ClientPlayerEntity player = Objects.requireNonNull(client.player);
+        Objects.requireNonNull(client.world).playSound(player.getX(), player.getY(), player.getZ(), SoundEvents.BLOCK_AMETHYST_BLOCK_BREAK,
+                SoundCategory.PLAYERS, 1, 1, false);
         return 1;
     }
 }

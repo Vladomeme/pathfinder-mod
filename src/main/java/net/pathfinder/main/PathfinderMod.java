@@ -36,6 +36,7 @@ import java.util.concurrent.Executors;
 
 import static net.fabricmc.fabric.api.client.command.v2.ClientCommandManager.argument;
 import static net.fabricmc.fabric.api.client.command.v2.ClientCommandManager.literal;
+import static net.pathfinder.main.config.PFConfig.cfg;
 
 //todo cleanup assertions
 //todo de-static everything
@@ -105,17 +106,20 @@ public class PathfinderMod implements ClientModInitializer {
         ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> clear());
 
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
-            if (GraphEditor.active && client.player != null) {
-                GraphEditor.tick();
-                tickKeybinds();
-                GraphRenderer.updatePosition(client.player);
+            if (client.player != null) {
+                if (GraphEditor.active) {
+                    GraphEditor.tick();
+                    tickKeybinds();
+                    GraphRenderer.updatePosition(client.player);
+                }
+                if (PathManager.isActive()) PathManager.tick();
             }
-            if (PathManager.isActive()) PathManager.tick();
         });
 
         WorldRenderEvents.AFTER_ENTITIES.register(context -> {
             if (GraphEditor.active) GraphRenderer.render(context);
             else if (DebugManager.shouldRender()) GraphRenderer.renderDebug(Objects.requireNonNull(context.matrixStack()));
+            if (PathManager.isActive() && cfg.renderBeacon) PathManager.renderBeacon(context);
         });
 
         HudLayerRegistrationCallback.EVENT.register(drawer -> drawer.attachLayerBefore(

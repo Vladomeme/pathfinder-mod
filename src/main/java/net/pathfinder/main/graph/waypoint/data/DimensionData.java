@@ -3,6 +3,7 @@ package net.pathfinder.main.graph.waypoint.data;
 import com.google.gson.Gson;
 import io.netty.util.collection.LongObjectHashMap;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Vec3i;
 import net.pathfinder.main.Output;
 import net.pathfinder.main.graph.PositionUtils;
 
@@ -99,7 +100,7 @@ public class DimensionData {
     /**
      * Used for getting the nearest waypoint from stable data.
      */
-    public Waypoint getNearest(BlockPos target, int range) {
+    public Waypoint getNearest(Vec3i target, int range) {
         Waypoint nearest = null;
         int minDistance = Integer.MAX_VALUE;
 

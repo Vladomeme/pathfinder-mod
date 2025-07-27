@@ -1,31 +1,18 @@
 package net.pathfinder.main.graph.waypoint.path;
 
-import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Vec3i;
 
 /**
  * A node type used to store current path.
  */
-public class PathNode {
+public class PathNode extends Vec3i {
 
-    final BlockPos pos;
     PathNode next;
     final boolean isTeleport;
 
-    public PathNode(BlockPos pos, boolean isTeleport) {
-        this.pos = pos;
+    public PathNode(Vec3i pos, boolean isTeleport) {
+        super(pos.getX(), pos.getY(), pos.getZ());
         this.isTeleport = isTeleport;
-    }
-
-    public int x() {
-        return pos.getX();
-    }
-
-    public int y() {
-        return pos.getY();
-    }
-
-    public int z() {
-        return pos.getZ();
     }
 
     public PathNode getLast() {

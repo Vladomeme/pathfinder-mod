@@ -9,6 +9,7 @@ import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.client.world.ClientWorld;
 import net.minecraft.util.Pair;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Vec3i;
 import net.pathfinder.main.Output;
 import net.pathfinder.main.PathfinderMod;
 import net.pathfinder.main.graph.CandidateSupplier;
@@ -185,7 +186,7 @@ public class AstarBuilder {
     /**
      * Used in path smoothing to check if smoothed path segments are traversable.
      */
-    private static boolean isLinkValid(ClientWorld world, BlockPos pos1, BlockPos pos2) {
+    public static boolean isLinkValid(ClientWorld world, Vec3i pos1, Vec3i pos2) {
         if (pos1.getY() != pos2.getY()) return false;
 
         float steps = PositionUtils.getDistance(pos1, pos2) * 5;
@@ -216,7 +217,7 @@ public class AstarBuilder {
                 currentZ = pointerIntZ;
             }
         }
-        if (world.getBlockState(pos1.mutableCopy().add(0, -1, 0)).getBlock().equals(Blocks.WATER)) {
+        if (world.getBlockState(new BlockPos(pos1.getX(), pos1.getY() - 1, pos1.getZ())).getBlock().equals(Blocks.WATER)) {
             for (BlockPos pos : positions) {
                 if (!PositionUtils.isValidSwimPosition(world, pos)) return false;
             }
