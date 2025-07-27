@@ -28,7 +28,8 @@ public class RenderUtils {
     }
 
     public static void endRender() {
-        BufferRenderer.drawWithGlobalProgram(buffer.end());
+        BuiltBuffer builtBuffer = buffer.endNullable();
+        if (builtBuffer != null) BufferRenderer.drawWithGlobalProgram(builtBuffer);
 
         RenderSystem.enableCull();
         RenderSystem.disableBlend();

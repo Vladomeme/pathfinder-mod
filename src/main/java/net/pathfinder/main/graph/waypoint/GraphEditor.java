@@ -71,8 +71,11 @@ public class GraphEditor {
             }
         }
         else {
-            Waypoint end = processNewPath(selected, AstarBuilder.findAndReturn(selected.pos(), newPos));
-            if (mode == CONTINUOUS) selected = end; //Reassign current starting point
+            if (mode == STRAIGHT) connectStraight(selected, newPos);
+            else {
+                Waypoint end = processNewPath(selected, AstarBuilder.findAndReturn(selected.pos(), newPos));
+                if (mode == CONTINUOUS) selected = end; //Reassign current starting point
+            }
         }
     }
 
@@ -179,6 +182,20 @@ public class GraphEditor {
      * Connect waypoints by marking them as each other's neighbours (used in STRAIGHT mode).
      */
     private static void connectStraight(Waypoint waypoint1, Waypoint waypoint2) {
+        waypoint1.addNeighbour(waypoint2.id());
+        waypoint2.addNeighbour(waypoint1.id());
+        hasChanges = true;
+        GraphRenderer.updateElements();
+
+        Output.chat("Straight path created: " + waypoint1.id() + " - " + waypoint2.id() + ".");
+    }
+
+    /**
+     * Connect waypoints by marking them as each other's neighbours (used in STRAIGHT mode).
+     */
+    private static void connectStraight(Waypoint waypoint1, BlockPos pos) {
+        Waypoint waypoint2 = new Waypoint(pos);
+        currentSelection.put(waypoint2.id(), waypoint2);
         waypoint1.addNeighbour(waypoint2.id());
         waypoint2.addNeighbour(waypoint1.id());
         hasChanges = true;
