@@ -172,7 +172,6 @@ public class PathManager {
         }
     }
 
-    //todo improve visuals
     private static void displayPath() {
         assert client.player != null;
         float pathLength = cfg.pathDisplayLength;

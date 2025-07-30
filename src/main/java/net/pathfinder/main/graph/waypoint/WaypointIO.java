@@ -19,7 +19,6 @@ import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-//todo remove special symbols from file names
 //todo server address aliases
 //todo resource pack data loading
 /**
@@ -44,9 +43,9 @@ public class WaypointIO {
         ClientPlayerEntity player = Objects.requireNonNull(client.player);
         BlockPos pos = player.getBlockPos();
         if (data != null) {
-            Waypoint nearest = (GraphEditor.active) ? GraphEditor.getNearest(pos) : WaypointIO.getData().getNearest(pos, 100);
+            Waypoint nearest = (GraphEditor.active) ? GraphEditor.getNearest(pos) : getData().getNearest(pos, 100);
             Output.chat("Dimension is already initialized. Waypoint available at " +
-                    Objects.requireNonNullElseGet(nearest, () -> WaypointIO.getData().waypoints.values().stream().findAny().get()).coordinates());
+                    Objects.requireNonNullElseGet(nearest, () -> getData().waypoints.values().stream().findAny().get()).coordinates());
             return 1;
         }
         if (!PositionUtils.isValidPosition(player.clientWorld, pos)) {
@@ -92,6 +91,7 @@ public class WaypointIO {
     private static void updateWorldName() {
         if (client.isInSingleplayer()) world = client.getServer().getSaveProperties().getLevelName();
         else world = client.getCurrentServerEntry().address;
+        world = world.replaceAll("[^a-zA-Z0-9]", "_");
     }
 
     private static void updateWorldConfig(Path path) {
@@ -114,18 +114,18 @@ public class WaypointIO {
 
             if (tabText != null) {
                 if (tabMatcher.reset(tabText.getString()).find()) {
-                    WaypointIO.dimension = tabMatcher.group();
+                    dimension = tabMatcher.group().replaceAll("[^a-zA-Z0-9]", "_");
                     return;
                 }
             }
         }
         if (config.useDimensionInfo || force) {
             Identifier id = client.world.getRegistryKey().getValue();
-            WaypointIO.dimension = id.toString();
+            dimension = id.toString().replaceAll("[^a-zA-Z0-9]", "_");
             return;
         }
         Output.logWarn("Couldn't retrieve a valid dimension name!");
-        WaypointIO.dimension = "unknown";
+        dimension = "unknown";
     }
 
     private static void updateDimensionData(Path path) {
