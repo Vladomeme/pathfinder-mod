@@ -1,5 +1,8 @@
 package net.pathfinder.main.graph.waypoint;
 
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
+import com.google.gson.stream.JsonWriter;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayerEntity;
@@ -13,13 +16,14 @@ import net.pathfinder.main.graph.waypoint.data.Waypoint;
 import net.pathfinder.main.graph.waypoint.data.WorldConfig;
 import net.pathfinder.main.mixin.PlayerListHudAccessor;
 
+import java.io.FileWriter;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Objects;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-//todo server address aliases
 //todo resource pack data loading
 /**
  * A class responsible for loading all the data for a current dimensions.
@@ -27,8 +31,10 @@ import java.util.regex.Pattern;
 public class WaypointIO {
 
     private static final Path PATH = Path.of(FabricLoader.getInstance().getConfigDir() + "/pathfinder");
+    private static final Path INDEX_PATH = Path.of(PATH + "/" + "index.json");
     private static final MinecraftClient client = MinecraftClient.getInstance();
 
+    static HashMap<String, List<String>> worldIndex = new HashMap<>();
     static String world;
     static String dimension;
     static WorldConfig config;
@@ -38,7 +44,7 @@ public class WaypointIO {
     /**
      * Adds a dimension to the system, creates first waypoint & enables the editing mode.
      */
-    @SuppressWarnings({"ResultOfMethodCallIgnored, SameReturnValue", "OptionalGetWithoutIsPresent"}) //for .mkdirs()
+    @SuppressWarnings({"ResultOfMethodCallIgnored, SameReturnValue", "OptionalGetWithoutIsPresent", "ConstantConditions"})
     public static int initializeDimension() {
         ClientPlayerEntity player = Objects.requireNonNull(client.player);
         BlockPos pos = player.getBlockPos();
@@ -54,7 +60,15 @@ public class WaypointIO {
         }
 
         Path worldPath = Path.of(PATH + "/" + world);
-        if (!Files.exists(worldPath)) worldPath.toFile().mkdirs();
+        if (!Files.exists(worldPath)) {
+            worldPath.toFile().mkdirs();
+
+            List<String> newList = new ArrayList<>();
+            if (client.isInSingleplayer()) newList.add(client.getServer().getSaveProperties().getLevelName());
+            else newList.add(client.getCurrentServerEntry().address);
+
+            worldIndex.put(world, newList);
+        }
 
         updateWorldConfig(Path.of(worldPath + "/config.json"));
 
@@ -63,10 +77,11 @@ public class WaypointIO {
         updateDimensionData(dimensionPath);
 
         data.add(new Waypoint(pos));
+        GraphEditor.toggleEditing();
+        GraphEditor.save(true);
 
         Output.chat("Dimension `" + dimension + "` initialized! " +
                 "An origin waypoint have been placed at your current position.");
-        GraphEditor.toggleEditing();
         return 1;
     }
 
@@ -87,11 +102,56 @@ public class WaypointIO {
         }
     }
 
+    public static void readIndex() {
+        if (Files.exists(INDEX_PATH)) {
+            try {
+                worldIndex = new Gson().fromJson(Files.readString(INDEX_PATH, StandardCharsets.UTF_8),
+                        new TypeToken<HashMap<String, List<String>>>(){}.getType());
+            }
+            catch (Exception e) {
+                Output.logError("Failed to read Pathfinder world index.");
+                throw new RuntimeException(e);
+            }
+        }
+        else {
+            worldIndex = new HashMap<>();
+            writeIndex();
+        }
+    }
+
+    public static void writeIndex() {
+        if (worldIndex == null) return;
+
+        Gson gson = new Gson();
+        try (JsonWriter writer = gson.newJsonWriter(new FileWriter(INDEX_PATH.toFile(), StandardCharsets.UTF_8))) {
+            writer.setIndent("    ");
+            gson.toJson(gson.toJsonTree(worldIndex, new TypeToken<HashMap<String, List<String>>>(){}.getType()), writer);
+        }
+        catch (Exception e) {
+            Output.logError("Failed to save Pathfinder world index.");
+            Output.logError(e.getMessage());
+        }
+    }
+
     @SuppressWarnings("ConstantConditions")
     private static void updateWorldName() {
         if (client.isInSingleplayer()) world = client.getServer().getSaveProperties().getLevelName();
         else world = client.getCurrentServerEntry().address;
-        world = world.replaceAll("[^a-zA-Z0-9]", "_");
+
+        String worldClean = world.replaceAll("[^a-zA-Z0-9]", "_");
+        Path worldPath = Path.of(PATH + "/" + worldClean);
+        if (Files.exists(worldPath)) {
+            world = worldClean;
+            return;
+        }
+
+        for (Map.Entry<String, List<String>> entry : worldIndex.entrySet()) {
+            if (entry.getValue().contains(world)) {
+                world = entry.getKey();
+                return;
+            }
+        }
+        world = worldClean;
     }
 
     private static void updateWorldConfig(Path path) {
@@ -105,11 +165,11 @@ public class WaypointIO {
 
     @SuppressWarnings("ConstantConditions") //world can't be null
     private static void updateDimensionName(boolean force) {
-        if (config.useTabDetection || force) {
+        if (force || config.useTabDetection) {
             PlayerListHudAccessor tab = ((PlayerListHudAccessor) client.inGameHud.getPlayerListHud());
             Text tabText;
 
-            if (config.useTabFooter) tabText = tab.getFooter();
+            if (config != null && config.useTabFooter) tabText = tab.getFooter();
             else tabText = tab.getHeader();
 
             if (tabText != null) {
@@ -119,7 +179,7 @@ public class WaypointIO {
                 }
             }
         }
-        if (config.useDimensionInfo || force) {
+        if (force || config.useDimensionInfo) {
             Identifier id = client.world.getRegistryKey().getValue();
             dimension = id.toString().replaceAll("[^a-zA-Z0-9]", "_");
             return;
@@ -147,6 +207,10 @@ public class WaypointIO {
 
     public static DimensionData getData() {
         return data;
+    }
+
+    public static String getWorld() {
+        return world;
     }
 
     public static void clear() {

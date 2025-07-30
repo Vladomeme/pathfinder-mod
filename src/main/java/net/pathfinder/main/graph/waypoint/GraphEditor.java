@@ -139,6 +139,7 @@ public class GraphEditor {
         Output.chat("Path created: " + waypoint1.id() + " - " + waypoint2.id() + ".");
     }
 
+    //todo connect to current standing position
     /**
      * Extends graph to a position by building an A*-based path to a true-nearest waypoint.
      */
@@ -292,7 +293,7 @@ public class GraphEditor {
     }
 
     @SuppressWarnings("SameReturnValue")
-    public static int save() {
+    public static int save(boolean skipChecks) {
         if (WaypointIO.notInitialized()) return 1;
         if (!active) {
             Output.chat("Graph editor isn't active.");
@@ -309,8 +310,10 @@ public class GraphEditor {
             }
         }
 
-        cleanupGraph();
-        if (!checkGraphContinuity()) return 1;
+        if (!skipChecks) {
+            cleanupGraph();
+            if (!checkGraphContinuity()) return 1;
+        }
 
         WaypointIO.data.waypoints = new LongObjectHashMap<>();
         waypointsState.forEach((key, value) -> WaypointIO.data.waypoints.put(key, value.copy()));
@@ -501,7 +504,7 @@ public class GraphEditor {
             active = true;
         }
         else {
-            save();
+            save(false);
             clear();
         }
         Output.actionBar(active ? "Graph editing enabled." : "Graph editing disabled.", Output.Color.GOLD);

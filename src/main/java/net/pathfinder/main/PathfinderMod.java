@@ -5,6 +5,7 @@ import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
@@ -86,7 +87,7 @@ public class PathfinderMod implements ClientModInitializer {
                         .then(literal("discard")
                                 .executes(context -> GraphEditor.discard()))
                         .then(literal("save")
-                                .executes(context -> GraphEditor.save()))
+                                .executes(context -> GraphEditor.save(false)))
                         .then(literal("init")
                                 .executes(context -> WaypointIO.initializeDimension())))
                 .then(literal("route")
@@ -104,6 +105,9 @@ public class PathfinderMod implements ClientModInitializer {
     private void registerEvents() {
         ClientPlayConnectionEvents.JOIN.register((handler, sender, client) -> WaypointIO.read());
         ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> clear());
+
+        ClientLifecycleEvents.CLIENT_STARTED.register(client -> WaypointIO.readIndex());
+        ClientLifecycleEvents.CLIENT_STOPPING.register(client -> WaypointIO.writeIndex());
 
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             if (client.player != null) {
@@ -168,6 +172,10 @@ public class PathfinderMod implements ClientModInitializer {
 
     @SuppressWarnings("SameReturnValue")
     private int debug() {
+        MinecraftClient client = MinecraftClient.getInstance();
+        Output.chat("World: " + (client.isInSingleplayer() ?
+                Objects.requireNonNull(client.getServer()).getSaveProperties().getLevelName() :
+                Objects.requireNonNull(client.getCurrentServerEntry()).address) + " | " + WaypointIO.getWorld());
         Output.chat("Dimension: " + WaypointIO.getDimension());
         Output.chat("Initialized: " + (WaypointIO.getData() != null));
         DimensionData data = WaypointIO.getData();
