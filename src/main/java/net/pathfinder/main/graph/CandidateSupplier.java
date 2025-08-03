@@ -166,12 +166,12 @@ public class CandidateSupplier {
         BlockState state1 = world.getBlockState(addY(pos, -1));
         BlockState state2 = world.getBlockState(pos);
         BlockState state3 = world.getBlockState(addY(pos, 1));
-        Block block1 = state1.getBlock();
+        //Block block1 = state1.getBlock();
         Block block2 = state2.getBlock();
         Block block3 = state3.getBlock();
         
         if (move != Movement.LEVEL) cost += cfg.yChangeCost;
-        if (block1.equals(Blocks.WATER) || block2.equals(Blocks.WATER)) cost *= cfg.waterMulti;
+        if (isWaterPassable(state1) || isWaterPassable(state2) || isWaterPassable(state3)) cost *= cfg.waterMulti;
         if (block2.equals(Blocks.COBWEB) || block3.equals(Blocks.COBWEB)) cost += cfg.cobwebMulti;
         if (move != Movement.LEVEL && state1.isIn(BlockTags.STAIRS)) cost = cfg.stairsCost;
 

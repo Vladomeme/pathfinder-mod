@@ -1,11 +1,11 @@
 package net.pathfinder.main.graph;
 
-import net.minecraft.block.BlockState;
-import net.minecraft.block.Blocks;
+import net.minecraft.block.*;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.client.world.ClientWorld;
 import net.minecraft.registry.tag.BlockTags;
+import net.minecraft.state.property.Properties;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.math.Vec3i;
@@ -36,18 +36,18 @@ public class PositionUtils {
     public static boolean isStandable(ClientWorld world, BlockPos pos, int xVec, int yVec, int zVec) {
         BlockState state = world.getBlockState(add(pos, xVec, yVec, zVec));
         return (state.getBlock().collidable && !isIn(CARPETS, state) && !state.getBlock().equals(Blocks.LIGHT))
-                || state.isIn(BlockTags.CLIMBABLE) || state.getBlock().equals(Blocks.WATER);
+                || state.isIn(BlockTags.CLIMBABLE) || isWaterPassable(state);
     }
 
     public static boolean isStandable(ClientWorld world, BlockPos pos) {
         BlockState state = world.getBlockState(pos);
         return (state.getBlock().collidable && !isIn(CARPETS, state) && !state.getBlock().equals(Blocks.LIGHT))
-                || state.isIn(BlockTags.CLIMBABLE) || state.getBlock().equals(Blocks.WATER);
+                || state.isIn(BlockTags.CLIMBABLE) || isWaterPassable(state);
     }
 
     public static boolean isStandableSolid(ClientWorld world, BlockPos pos, int xVec, int yVec, int zVec) {
         BlockState state = world.getBlockState(add(pos, xVec, yVec, zVec));
-        return (state.getBlock().collidable && !isIn(CARPETS, state) && !state.getBlock().equals(Blocks.LIGHT));
+        return state.getBlock().collidable && !isIn(CARPETS, state) && !state.getBlock().equals(Blocks.LIGHT);
     }
 
     public static boolean notFence(ClientWorld world, BlockPos pos, int xVec, int yVec, int zVec) {
@@ -65,7 +65,13 @@ public class PositionUtils {
 
     public static boolean isClimbable(ClientWorld world, BlockPos pos) {
         BlockState state = world.getBlockState(pos);
-        return state.isIn(BlockTags.CLIMBABLE) || state.getBlock().equals(Blocks.WATER);
+        return state.isIn(BlockTags.CLIMBABLE) || isWaterPassable(state);
+    }
+
+    public static boolean isWaterPassable(BlockState state) {
+        Block block = state.getBlock();
+        return block.equals(Blocks.WATER) || ((!block.collidable || isIn(PASSABLE, state))
+                && block instanceof FluidFillable && (isIn(WATER_PASSABLE, state) || (state.contains(Properties.WATERLOGGED) && state.get(Properties.WATERLOGGED))));
     }
 
     public static boolean isValidPosition(ClientWorld world, BlockPos pos) {
@@ -87,7 +93,7 @@ public class PositionUtils {
 
     @SuppressWarnings("BooleanMethodIsAlwaysInverted")
     public static boolean isValidSwimPosition(ClientWorld world, BlockPos pos) {
-        boolean b1 = world.getBlockState(addY(pos, -1)).getBlock().equals(Blocks.WATER);
+        boolean b1 = isWaterPassable(world.getBlockState(addY(pos, -1)));
         boolean b2 = isPassable(world, pos) && isSafe(world, pos);
 
         return b1 && b2;

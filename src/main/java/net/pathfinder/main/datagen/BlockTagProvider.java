@@ -22,6 +22,7 @@ public class BlockTagProvider extends FabricTagProvider.BlockTagProvider {
     public static final TagKey<Block> PASSABLE = TagKey.of(RegistryKeys.BLOCK, Identifier.of("pathfinder", "passable"));
     public static final TagKey<Block> CARPETS = TagKey.of(RegistryKeys.BLOCK, Identifier.of("pathfinder", "carpets"));
     public static final TagKey<Block> DANGEROUS = TagKey.of(RegistryKeys.BLOCK, Identifier.of("pathfinder", "dangerous"));
+    public static final TagKey<Block> WATER_PASSABLE = TagKey.of(RegistryKeys.BLOCK, Identifier.of("pathfinder", "water_passable"));
 
     public BlockTagProvider(FabricDataOutput output, CompletableFuture<RegistryWrapper.WrapperLookup> registriesFuture) {
         super(output, registriesFuture);
@@ -37,6 +38,7 @@ public class BlockTagProvider extends FabricTagProvider.BlockTagProvider {
                 .add(Blocks.MOSS_CARPET)
                 .add(Blocks.SNOW)
                 .add(Blocks.LADDER)
+                .add(Blocks.LILY_PAD)
                 .add(Blocks.LIGHT);
 
         getOrCreateTagBuilder(CARPETS)
@@ -48,12 +50,19 @@ public class BlockTagProvider extends FabricTagProvider.BlockTagProvider {
                 .forceAddTag(BlockTags.CAMPFIRES)
                 .forceAddTag(BlockTags.FIRE)
                 .add(Blocks.LAVA);
+
+        getOrCreateTagBuilder(WATER_PASSABLE)
+                .add(Blocks.KELP)
+                .add(Blocks.KELP_PLANT)
+                .add(Blocks.SEAGRASS)
+                .add(Blocks.TALL_SEAGRASS);
     }
 
     public static void registerOnClient() {
         ClientTags.getOrCreateLocalTag(PASSABLE);
         ClientTags.getOrCreateLocalTag(CARPETS);
         ClientTags.getOrCreateLocalTag(DANGEROUS);
+        ClientTags.getOrCreateLocalTag(WATER_PASSABLE);
     }
 
     @SuppressWarnings("OptionalGetWithoutIsPresent")
