@@ -34,6 +34,12 @@ public class DijkstraNode implements Comparable<DijkstraNode> {
         else return info.isTeleport();
     }
 
+    public boolean isOneWay() {
+        LocationData info = WaypointIO.getData().locations.get(waypoint.id());
+        if (info == null) return false;
+        else return info.isOneWay();
+    }
+
     @Override
     public int compareTo(@NotNull DijkstraNode o) {
         return Float.compare(distance, o.distance);

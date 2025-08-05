@@ -45,6 +45,7 @@ public class TextButtonWidget extends ButtonWidget {
     }
 
     private int getColor(int mouseX, int mouseY) {
+        if (!active) return cfg.buttonInactiveColour;
         return isMouseOver(mouseX, mouseY) ? cfg.buttonActiveColour : type.equals(Type.Normal) ?
                 cfg.buttonInactiveColour : type.equals(Type.Positive) ?
                 cfg.buttonPositiveColour : cfg.buttonNegativeColour;

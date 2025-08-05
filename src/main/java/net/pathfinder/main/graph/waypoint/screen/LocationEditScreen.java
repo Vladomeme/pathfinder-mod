@@ -33,6 +33,7 @@ public class LocationEditScreen extends Screen {
     private final LocationData info;
 
     private TextButtonWidget teleportToggle;
+    private TextButtonWidget oneWayToggle;
     private TextFieldWidget nameField;
     private TextFieldWidget areaField;
 
@@ -58,33 +59,47 @@ public class LocationEditScreen extends Screen {
     private void addElements() {
         Style style = Style.EMPTY.withItalic(true).withColor(-10197916);
 
-        addDrawableChild(teleportToggle = new TextButtonWidget(TextButtonWidget.Type.Normal, centerX - 80, centerY - 52,
-                50, 11, "false", button -> toggleTeleport()));
+        addDrawableChild(teleportToggle = new TextButtonWidget(TextButtonWidget.Type.Negative, centerX - 80, centerY - 52,
+                50, 11, "false", button -> toggleValue(teleportToggle)));
 
-        addDrawableChild(nameField = new TextFieldWidget(tr, centerX - 80, centerY - 36, 160, 12, Text.of("")));
+        addDrawableChild(oneWayToggle = new TextButtonWidget(TextButtonWidget.Type.Normal, centerX - 80, centerY - 36,
+                50, 11, "-", button -> toggleValue(oneWayToggle)));
+
+        addDrawableChild(nameField = new TextFieldWidget(tr, centerX - 80, centerY - 20, 160, 12, Text.of("")));
         nameField.setPlaceholder(Text.of("name").getWithStyle(style).get(0));
         nameField.setMaxLength(9999);
 
-        addDrawableChild(areaField = new TextFieldWidget(tr, centerX - 80, centerY - 20, 160, 12, Text.of("")));
+        addDrawableChild(areaField = new TextFieldWidget(tr, centerX - 80, centerY - 4, 160, 12, Text.of("")));
         areaField.setPlaceholder(Text.of("area").getWithStyle(style).get(0));
         areaField.setChangedListener(s -> verifyArea());
         areaField.setMaxLength(9999);
 
         //Cancel button
         addDrawableChild(new TextButtonWidget(TextButtonWidget.Type.Negative,
-                centerX - 60, centerY, 36, 11, "Cancel", button -> close()));
+                centerX - 60, centerY + 16, 36, 11, "Cancel", button -> close()));
 
         //Save button
         addDrawableChild(new TextButtonWidget(TextButtonWidget.Type.Normal,
-                centerX + 24, centerY, 36, 11, "Save", button -> save()));
+                centerX + 24, centerY + 16, 36, 11, "Save", button -> save()));
 
         fillFields();
     }
 
     private void fillFields() {
         if (info != null) {
-            teleportToggle.setText(String.valueOf(info.isTeleport()));
-            teleportToggle.setType(info.isTeleport() ? TextButtonWidget.Type.Positive : TextButtonWidget.Type.Negative);
+            if (info.isTeleport()) {
+                teleportToggle.setText("true");
+                teleportToggle.setType(TextButtonWidget.Type.Positive);
+                oneWayToggle.setText(String.valueOf(info.isOneWay()));
+                oneWayToggle.setType(info.isOneWay() ? TextButtonWidget.Type.Positive : TextButtonWidget.Type.Negative);
+            }
+            else {
+                teleportToggle.setText("false");
+                teleportToggle.setType(TextButtonWidget.Type.Negative);
+                oneWayToggle.setText("-");
+                oneWayToggle.setType(TextButtonWidget.Type.Normal);
+                oneWayToggle.active = false;
+            }
             if (info.name() != null) nameField.setText(info.name());
             int[] area = info.area();
             if (area != null) {
@@ -104,16 +119,18 @@ public class LocationEditScreen extends Screen {
 
         matrices.push();
         matrices.translate(0, 0, 1);
-        context.fill(centerX - 132, centerY - 86, centerX + 132, centerY + 15, 0, cfg.backgroundColour);
-        context.drawBorder(centerX - 133, centerY - 87, 266, 102, cfg.borderColour);
+        context.fill(centerX - 132, centerY - 86, centerX + 132, centerY + 31, 0, cfg.backgroundColour);
+        context.drawBorder(centerX - 133, centerY - 87, 266, 118, cfg.borderColour);
         context.drawCenteredTextWithShadow(tr, "Editing location info...",
                 centerX, centerY - 79, cfg.textColour);
 
         context.drawText(tr, Text.of("Teleport"), centerX - 85 - tr.getWidth("Teleport"), centerY - 50,
                 cfg.textColour, false);
-        context.drawText(tr, Text.of("Name"), centerX - 85 - tr.getWidth("Name"), centerY - 34,
+        context.drawText(tr, Text.of("One way"), centerX - 85 - tr.getWidth("One way"), centerY - 34,
                 cfg.textColour, false);
-        context.drawText(tr, Text.of("Area"), centerX - 85 - tr.getWidth("Area"), centerY - 18,
+        context.drawText(tr, Text.of("Name"), centerX - 85 - tr.getWidth("Name"), centerY - 18,
+                cfg.textColour, false);
+        context.drawText(tr, Text.of("Area"), centerX - 85 - tr.getWidth("Area"), centerY - 2,
                 cfg.textColour, false);
 
         for (Element element : children())
@@ -138,14 +155,25 @@ public class LocationEditScreen extends Screen {
         return null;
     }
 
-    private void toggleTeleport() {
-        if (teleportToggle.text.equals("false")) {
-            teleportToggle.setText("true");
-            teleportToggle.setType(TextButtonWidget.Type.Positive);
+    private void toggleValue(TextButtonWidget button) {
+        if (!button.active) return;
+        if (button.text.equals("false")) {
+            button.setText("true");
+            button.setType(TextButtonWidget.Type.Positive);
+            if (button == teleportToggle) {
+                oneWayToggle.setText("false");
+                oneWayToggle.setType(TextButtonWidget.Type.Negative);
+                oneWayToggle.active = true;
+            }
         }
         else {
-            teleportToggle.setText("false");
-            teleportToggle.setType(TextButtonWidget.Type.Negative);
+            button.setText("false");
+            button.setType(TextButtonWidget.Type.Negative);
+            if (button == teleportToggle) {
+                oneWayToggle.setText("-");
+                oneWayToggle.setType(TextButtonWidget.Type.Normal);
+                oneWayToggle.active = false;
+            }
         }
     }
 
@@ -155,6 +183,7 @@ public class LocationEditScreen extends Screen {
 
         LocationData info = (this.info != null ? this.info : LocationData.create(id));
         info.setTeleport(teleportToggle.text.equals("true"))
+                .setOneWay(oneWayToggle.text.equals("true"))
                 .setName(nameField.getText())
                 .setArea(area);
 

@@ -10,6 +10,7 @@ import net.minecraft.client.render.block.entity.BeaconBlockEntityRenderer;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.client.world.ClientWorld;
 import net.minecraft.particle.ParticleTypes;
+import net.minecraft.particle.SimpleParticleType;
 import net.minecraft.sound.SoundCategory;
 import net.minecraft.sound.SoundEvents;
 import net.minecraft.util.Identifier;
@@ -34,7 +35,7 @@ public class PathManager {
     static PathNode head;
     static PathNode nearest;
     static PathNode last;
-    static final List<Vec3i> swirls = new ArrayList<>();
+    static final List<Swirl> swirls = new ArrayList<>();
     static boolean pathReached = false;
     static ChunkPos lastPos;
 
@@ -69,7 +70,7 @@ public class PathManager {
         nearest = head;
         last = head.getLast();
         positionUpdate(player);
-        displayPath();
+        if (head != null) displayPath();
         Output.chat("Destination set: " + x + " " + y + " " + z + ".");
         assert client.world != null;
         client.world.playSound(player.getX(), player.getY(), player.getZ(), SoundEvents.BLOCK_AMETHYST_BLOCK_RESONATE,
@@ -93,7 +94,7 @@ public class PathManager {
         nearest = head;
         last = head.getLast();
         positionUpdate(player);
-        displayPath();
+        if (head != null) displayPath();
     }
 
     private static void positionUpdate(ClientPlayerEntity player) {
@@ -116,6 +117,8 @@ public class PathManager {
         }
         if (PositionUtils.getSquaredDistance(last) < cfg.destinationRangeSquared) {
             Output.chat("Destination reached!", Output.Color.GREEN);
+            Objects.requireNonNull(client.world).playSound(player.getX(), player.getY(), player.getZ(), SoundEvents.BLOCK_AMETHYST_BLOCK_BREAK,
+                    SoundCategory.PLAYERS, 1, 1, false);
             clear();
             return;
         }
@@ -151,11 +154,11 @@ public class PathManager {
 
         while (travelDistance > 0 && current.next != null) {
             if (current.isTeleport && current.next.isTeleport)
-                swirls.add(current);
+                swirls.add(new Swirl(current, current.oneWay));
             travelDistance -= PositionUtils.getDistance(current, current.next);
             current = current.next;
         }
-        if (current.next == null) swirls.add(current);
+        if (current.next == null) swirls.add(new Swirl(current, false));
     }
 
     @SuppressWarnings("unused")
@@ -210,7 +213,7 @@ public class PathManager {
 
         //Node to node, skipping teleportation segments
         PathNode current = nearest.next;
-        if (current == null) return;
+        if (current == null || current.next == null) return;
         while (pathLength > 0) {
             segmentLength = PositionUtils.getDistance(current, current.next);
             if (segmentLength > 0.1f) {
@@ -254,25 +257,30 @@ public class PathManager {
 
     //x(t) = R * cos(t), y(t) = a * t, z(t) = R * sin(t).
     private static void displaySwirls() {
-        double t = client.getRenderTime();
+        double time = ticks % 40;
+        double rad = time / 20 * Math.PI;
         double random = (Math.random() - Math.random()) * 0.2;
 
-        double swirlX1 = Math.cos(t) + random + 0.5;
-        double swirlZ1 = Math.sin(t) + random + 0.5;
-        double swirlX2 = -Math.cos(t) + random + 0.5;
-        double swirlZ2 = -Math.sin(t) + random + 0.5;
-        double swirlY = (t % 40) / 13.3f + random;
+        double swirlX1 = Math.cos(rad) + random + 0.5;
+        double swirlZ1 = Math.sin(rad) + random + 0.5;
+        double swirlX2 = -Math.cos(rad) + random + 0.5;
+        double swirlZ2 = -Math.sin(rad) + random + 0.5;
+        double swirlY = time / 13.3f + random;
 
         ClientWorld world = client.world;
         assert world != null;
 
-        for (Vec3i pos : swirls) {
-            double x = pos.getX();
-            double z = pos.getZ();
-            double y = pos.getY() + swirlY;
+        for (Swirl swirl : swirls) {
+            double x = swirl.pos.getX();
+            double z = swirl.pos.getZ();
+            double y = swirl.pos.getY() + swirlY;
 
             world.addParticle(ParticleTypes.END_ROD, x + swirlX1, y, z + swirlZ1, 0, 0, 0);
             world.addParticle(ParticleTypes.END_ROD, x + swirlX2, y, z + swirlZ2, 0, 0, 0);
+
+            SimpleParticleType particle = swirl.oneWay ? ParticleTypes.SOUL_FIRE_FLAME : ParticleTypes.WITCH;
+            world.addParticle(particle, x + swirlX1, y, z + swirlZ1, 0, 0, 0);
+            world.addParticle(particle, x + swirlX2, y, z + swirlZ2, 0, 0, 0);
         }
     }
 
@@ -300,12 +308,11 @@ public class PathManager {
         return head != null;
     }
 
-    @SuppressWarnings("SameReturnValue")
-    public static int clear() {
+    public static void clear() {
         head = null;
-        ClientPlayerEntity player = Objects.requireNonNull(client.player);
-        Objects.requireNonNull(client.world).playSound(player.getX(), player.getY(), player.getZ(), SoundEvents.BLOCK_AMETHYST_BLOCK_BREAK,
-                SoundCategory.PLAYERS, 1, 1, false);
-        return 1;
+    }
+
+    private record Swirl(Vec3i pos, boolean oneWay) {
+
     }
 }

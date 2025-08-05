@@ -30,7 +30,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import static net.pathfinder.main.config.PFConfig.cfg;
 import static net.pathfinder.main.graph.render.RenderUtils.*;
 
-//todo one-way travel indicators
 //todo do precise changes after editing instead of recomputing all elements
 public class GraphRenderer {
 
@@ -169,28 +168,31 @@ public class GraphRenderer {
         if (updateLocked.get()) return;
         updateLocked.set(true);
         PathfinderMod.executor.submit(() -> {
-            List<Pair<Vec3d, Vec3d>> newLines = new ArrayList<>();
-            for (Pair<Vec3d, Vec3d> line : lines) {
-                if (PositionUtils.isInRange(playerPos, line.getLeft()) || PositionUtils.isInRange(playerPos, line.getRight()))
-                    newLines.add(line);
-            }
-            linesActive = newLines;
+            try {
+                List<Pair<Vec3d, Vec3d>> newLines = new ArrayList<>();
+                for (Pair<Vec3d, Vec3d> line : lines) {
+                    if (PositionUtils.isInRange(playerPos, line.getLeft()) || PositionUtils.isInRange(playerPos, line.getRight()))
+                        newLines.add(line);
+                }
+                linesActive = newLines;
 
-            List<Pair<Vec3d, Vec3d>> newTeleportLines = new ArrayList<>();
-            for (Pair<Vec3d, Vec3d> line : teleportLines) {
-                if (PositionUtils.isInRange(playerPos, line.getLeft()) || PositionUtils.isInRange(playerPos, line.getRight()))
-                    newTeleportLines.add(line);
-            }
-            teleportLinesActive = newTeleportLines;
+                List<Pair<Vec3d, Vec3d>> newTeleportLines = new ArrayList<>();
+                for (Pair<Vec3d, Vec3d> line : teleportLines) {
+                    if (PositionUtils.isInRange(playerPos, line.getLeft()) || PositionUtils.isInRange(playerPos, line.getRight()))
+                        newTeleportLines.add(line);
+                }
+                teleportLinesActive = newTeleportLines;
 
-            List<Vec3d> newTeleports = new ArrayList<>();
-            for (Vec3d teleport : teleports) {
-                if (PositionUtils.isInRange(playerPos, teleport, cfg.renderRange))
-                    newTeleports.add(teleport);
+                List<Vec3d> newTeleports = new ArrayList<>();
+                for (Vec3d teleport : teleports) {
+                    if (PositionUtils.isInRange(playerPos, teleport, cfg.renderRange))
+                        newTeleports.add(teleport);
+                }
+                teleportsActive = newTeleports;
             }
-            teleportsActive = newTeleports;
-
-            updateLocked.set(false);
+            finally {
+                updateLocked.set(false);
+            }
         });
     }
 

@@ -9,10 +9,12 @@ public class PathNode extends Vec3i {
 
     PathNode next;
     final boolean isTeleport;
+    final boolean oneWay;
 
-    public PathNode(Vec3i pos, boolean isTeleport) {
+    public PathNode(Vec3i pos, boolean isTeleport, boolean oneWay) {
         super(pos.getX(), pos.getY(), pos.getZ());
         this.isTeleport = isTeleport;
+        this.oneWay = oneWay;
     }
 
     public PathNode getLast() {

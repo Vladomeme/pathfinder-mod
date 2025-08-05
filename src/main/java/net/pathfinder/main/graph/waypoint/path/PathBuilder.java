@@ -35,21 +35,21 @@ public class PathBuilder {
         }
 
         //Starting segment
-        PathNode head = new PathNode(getNearestPoint(start, startWaypoint), false);
+        PathNode head = new PathNode(getNearestPoint(start, startWaypoint), false, false);
         PathNode current = head;
 
         //Graph segment
         List<DijkstraNode> path = runDijkstra(startWaypoint, endWaypoint);
         for (DijkstraNode node : path) {
-            PathNode newNode = new PathNode(node.pos(), node.isTeleport());
+            PathNode newNode = new PathNode(node.pos(), node.isTeleport(), node.isOneWay());
             current.next = newNode;
             current = newNode;
         }
 
         //Ending segment
-        PathNode graphEnd = new PathNode(getNearestPoint(end, endWaypoint), false);
+        PathNode graphEnd = new PathNode(getNearestPoint(end, endWaypoint), false, false);
         current.next = graphEnd;
-        graphEnd.next = new PathNode(end, false);
+        graphEnd.next = new PathNode(end, false, false);
         return head;
     }
 
@@ -84,7 +84,10 @@ public class PathBuilder {
                 DijkstraNode neighbour = nodes.get(l);
 
                 float newDistance;
-                if (current.isTeleport() && neighbour.isTeleport()) newDistance = current.distance;
+                if (current.isTeleport() && neighbour.isTeleport()) {
+                    if (neighbour.isOneWay()) continue;
+                    newDistance = current.distance;
+                }
                 else newDistance = current.distance + PositionUtils.getDistance(neighbour.pos(), current.pos());
 
                 if (neighbour.distance > newDistance) {

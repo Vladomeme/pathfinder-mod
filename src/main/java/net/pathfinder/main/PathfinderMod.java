@@ -16,6 +16,9 @@ import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.option.KeyBinding;
 import net.minecraft.client.util.InputUtil;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.sound.SoundCategory;
+import net.minecraft.sound.SoundEvents;
 import net.minecraft.util.Identifier;
 import net.pathfinder.main.datagen.BlockTagProvider;
 import net.pathfinder.main.graph.astar.AstarBuilder;
@@ -96,7 +99,13 @@ public class PathfinderMod implements ClientModInitializer {
                                         .then(argument("z", IntegerArgumentType.integer())
                                                 .executes(PathManager::compute)))))
                 .then(literal("clear_route")
-                        .executes(context -> PathManager.clear()));
+                        .executes(context -> {
+                            PathManager.clear();
+                            PlayerEntity player = context.getSource().getPlayer();
+                            Objects.requireNonNull(MinecraftClient.getInstance().world).playSound(player.getX(), player.getY(), player.getZ(),
+                                    SoundEvents.BLOCK_AMETHYST_BLOCK_BREAK, SoundCategory.PLAYERS, 1, 1, false);
+                            return 1;
+                        }));
         ClientCommandRegistrationCallback.EVENT.register((dispatcher, registry) ->
                 dispatcher.register(root)
         );
